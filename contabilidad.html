@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TSMC — Contabilidad</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --gold: #c9a84c;
+  --gold-light: #e8c96e;
+  --gold-dim: rgba(201,168,76,0.12);
+  --gold-dim2: rgba(201,168,76,0.06);
+  --bg: #08080a;
+  --bg2: #0f0f12;
+  --bg3: #161619;
+  --bg4: #1c1c21;
+  --border: rgba(201,168,76,0.15);
+  --border2: rgba(255,255,255,0.05);
+  --text: #e4e2dc;
+  --text-muted: #6e6c66;
+  --text-dim: #4a4845;
+  --success: #3d9e6a;
+  --success-bg: rgba(61,158,106,0.1);
+  --danger: #b85565;
+  --danger-bg: rgba(184,85,101,0.1);
+  --warning: #b88c3a;
+  --warning-bg: rgba(184,140,58,0.1);
+  --info: #4a7fa8;
+  --sidebar-w: 260px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; line-height: 1.5; display: flex; min-height: 100vh; overflow-x: hidden; }
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
+input, select, button { font-family: 'DM Sans', sans-serif; }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width: var(--sidebar-w); min-height: 100vh; position: fixed; left: 0; top: 0; bottom: 0;
+  background: var(--bg2); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; z-index: 50; overflow-y: auto;
+}
+.sidebar-logo {
+  padding: 1.8rem 1.5rem 1.4rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.7rem;
+}
+.logo-hex {
+  width: 32px; height: 32px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 1rem; color: #08080a;
+}
+.logo-label { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 300; letter-spacing: 0.12em; color: var(--gold-light); line-height: 1; }
+.logo-sub { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-top: 2px; }
+
+.sidebar-section-label {
+  font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-dim); padding: 1.2rem 1.5rem 0.5rem;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.65rem 1.5rem; cursor: pointer;
+  font-size: 0.82rem; color: var(--text-muted);
+  transition: all 0.2s; border-left: 2px solid transparent;
+  user-select: none;
+}
+.nav-item:hover { color: var(--text); background: var(--bg3); }
+.nav-item.active { color: var(--gold); border-left-color: var(--gold); background: var(--gold-dim2); }
+.nav-item-icon { font-size: 0.85rem; width: 16px; text-align: center; flex-shrink: 0; }
+
+.sidebar-investors {
+  flex: 1; overflow-y: auto; padding-bottom: 1rem;
+}
+.investor-nav-item {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.55rem 1.5rem; cursor: pointer;
+  transition: background 0.2s;
+}
+.investor-nav-item:hover { background: var(--bg3); }
+.investor-nav-item.selected { background: var(--gold-dim); }
+.inv-nav-avatar {
+  width: 26px; height: 26px; flex-shrink: 0;
+  background: var(--bg4); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-size: 0.7rem; color: var(--gold);
+}
+.inv-nav-name { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.inv-nav-badge { font-size: 0.55rem; letter-spacing: 0.08em; padding: 0.1rem 0.4rem; border: 1px solid; flex-shrink: 0; }
+.inv-nav-badge.active { color: var(--success); border-color: var(--success); }
+.inv-nav-badge.pending { color: var(--gold); border-color: var(--gold); }
+
+.sidebar-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.68rem; color: var(--text-dim);
+}
+.back-link {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  color: var(--text-muted); text-decoration: none; font-size: 0.75rem;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--gold); }
+
+/* ─── MAIN ─── */
+.main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(8,8,10,0.9); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px; gap: 1.5rem;
+}
+.topbar-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem; font-weight: 300; color: var(--text);
+}
+.topbar-right { display: flex; align-items: center; gap: 1rem; }
+.topbar-date { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--text-muted); }
+
+.tab-bar {
+  display: flex; gap: 0; border-bottom: 1px solid var(--border);
+  padding: 0 2.5rem; background: var(--bg2);
+}
+.tab {
+  padding: 0.85rem 1.3rem; font-size: 0.75rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-muted); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all 0.2s; white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+.content { padding: 2rem 2.5rem; flex: 1; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ─── KPI CARDS ─── */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 2rem; }
+.kpi-card { background: var(--bg2); padding: 1.5rem 1.8rem; position: relative; overflow: hidden; }
+.kpi-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--accent, var(--gold)); opacity: 0.4; }
+.kpi-label { font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.6rem; }
+.kpi-value { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 300; color: var(--text); line-height: 1; margin-bottom: 0.4rem; }
+.kpi-value span { font-size: 1rem; color: var(--text-muted); }
+.kpi-sub { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--text-dim); }
+.kpi-card.green { --accent: var(--success); }
+.kpi-card.red { --accent: var(--danger); }
+.kpi-card.blue { --accent: var(--info); }
+
+/* ─── CHARTS ROW ─── */
+.charts-row { display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+.chart-card { background: var(--bg2); border: 1px solid var(--border); padding: 1.5rem; }
+.chart-title { font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.6rem; }
+.chart-title::before { content: ''; width: 14px; height: 1px; background: var(--gold); }
+.chart-wrap { position: relative; }
+
+/* ─── SECTION HEADER ─── */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.8rem; }
+.section-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 300; }
+.section-title em { font-style: italic; color: var(--gold-light); }
+.filters { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.filter-select {
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text-muted);
+  padding: 0.45rem 0.8rem; font-size: 0.72rem; outline: none;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; transition: border-color 0.2s;
+  appearance: none; -webkit-appearance: none;
+}
+.filter-select:focus { border-color: var(--gold); }
+.filter-input {
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+  padding: 0.45rem 0.8rem; font-size: 0.72rem; outline: none;
+  font-family: 'DM Mono', monospace; transition: border-color 0.2s; width: 180px;
+}
+.filter-input:focus { border-color: var(--gold); }
+
+/* ─── TABLE ─── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead tr { border-bottom: 1px solid var(--border); }
+th { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); padding: 0.7rem 0.9rem; text-align: left; white-space: nowrap; font-weight: 400; }
+tbody tr { border-bottom: 1px solid var(--border2); transition: background 0.15s; cursor: default; }
+tbody tr:hover { background: var(--bg3); }
+td { padding: 0.75rem 0.9rem; font-size: 0.82rem; vertical-align: middle; }
+.mono { font-family: 'DM Mono', monospace; }
+.text-gold { color: var(--gold-light); }
+.text-muted { color: var(--text-muted); }
+.text-success { color: var(--success); }
+.text-danger { color: var(--danger); }
+.text-warning { color: var(--warning); }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 0.18rem 0.55rem; border: 1px solid; white-space: nowrap;
+}
+.badge.paid { color: var(--success); border-color: var(--success); background: var(--success-bg); }
+.badge.pending { color: var(--warning); border-color: var(--warning); background: var(--warning-bg); }
+.badge.overdue { color: var(--danger); border-color: var(--danger); background: var(--danger-bg); }
+.badge.active { color: var(--success); border-color: var(--success); background: var(--success-bg); }
+.badge.inactive { color: var(--text-muted); border-color: var(--text-dim); }
+
+.pay-btn {
+  padding: 0.28rem 0.7rem; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+  border: 1px solid var(--success); color: var(--success); background: transparent;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; white-space: nowrap;
+}
+.pay-btn:hover { background: var(--success-bg); }
+.pay-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.mini-progress { height: 2px; background: var(--bg4); width: 100px; position: relative; overflow: hidden; display: inline-block; vertical-align: middle; }
+.mini-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(to right, var(--gold), var(--gold-light)); }
+
+/* ─── LEDGER HEADER ─── */
+.ledger-investor-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  padding: 1.5rem 2rem; margin-bottom: 1.5rem;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 1.5rem; align-items: center;
+}
+.ledger-avatar {
+  width: 52px; height: 52px; background: var(--gold-dim); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--gold);
+}
+.ledger-info-name { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 300; margin-bottom: 0.2rem; }
+.ledger-info-meta { font-size: 0.75rem; color: var(--text-muted); }
+.ledger-kpis { display: flex; gap: 2rem; }
+.ledger-kpi-val { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 300; color: var(--gold-light); display: block; }
+.ledger-kpi-label { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+
+/* ─── SUMMARY TABLE (portfolio) ─── */
+.portfolio-table td:first-child { font-family: 'Cormorant Garamond', serif; font-size: 1rem; }
+
+/* ─── EMPTY STATE ─── */
+.empty { padding: 3rem; text-align: center; color: var(--text-muted); font-size: 0.82rem; border: 1px solid var(--border); background: var(--bg2); }
+.empty-icon { font-size: 1.8rem; margin-bottom: 0.8rem; color: var(--text-dim); }
+
+/* ─── TOAST ─── */
+.toast { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 300; background: var(--bg2); border: 1px solid var(--success); padding: 0.9rem 1.3rem; font-size: 0.8rem; color: var(--text); transform: translateY(80px); opacity: 0; transition: all 0.35s ease; max-width: 300px; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.danger { border-color: var(--danger); }
+
+/* ─── MODAL ─── */
+.modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(8,8,10,0.92); backdrop-filter: blur(6px); align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg2); border: 1px solid var(--border); padding: 2rem; max-width: 500px; width: 92%; position: relative; animation: modalIn 0.25s ease; max-height: 85vh; overflow-y: auto; }
+.modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: 1px solid var(--border); color: var(--text-muted); width: 28px; height: 28px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.modal-close:hover { border-color: var(--danger); color: var(--danger); }
+.modal-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 300; margin-bottom: 0.3rem; }
+.modal-sub { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+.modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 0.8rem; }
+.modal-detail { background: var(--bg3); padding: 0.7rem; }
+.modal-detail-label { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.3rem; }
+.modal-detail-value { font-family: 'DM Mono', monospace; font-size: 0.82rem; }
+.modal-footer { display: flex; gap: 0.8rem; margin-top: 1.5rem; }
+.btn-confirm { flex: 1; padding: 0.75rem; background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: #08080a; border: none; cursor: pointer; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'DM Sans', sans-serif; transition: opacity 0.2s; }
+.btn-confirm:hover { opacity: 0.85; }
+.btn-outline { padding: 0.75rem 1.2rem; background: transparent; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+.btn-outline:hover { border-color: var(--text-muted); color: var(--text); }
+
+@keyframes modalIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 1100px) { .kpi-grid { grid-template-columns: 1fr 1fr; } .charts-row { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; } .kpi-grid { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-hex">T</div>
+    <div>
+      <div class="logo-label">TSMC</div>
+      <div class="logo-sub">Contabilidad</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section-label">Módulos</div>
+  <div class="nav-item active" onclick="switchTab('resumen')">
+    <span class="nav-item-icon">◈</span> Resumen general
+  </div>
+  <div class="nav-item" onclick="switchTab('cronograma')">
+    <span class="nav-item-icon">◷</span> Cronograma de pagos
+  </div>
+  <div class="nav-item" onclick="switchTab('historial')">
+    <span class="nav-item-icon">◎</span> Historial de transacciones
+  </div>
+  <div class="nav-item" onclick="switchTab('portafolio')">
+    <span class="nav-item-icon">◉</span> Portafolio consolidado
+  </div>
+
+  <div class="sidebar-section-label">Inversores</div>
+  <div class="sidebar-investors" id="sidebarInvestors"></div>
+
+  <div class="sidebar-footer">
+    <a href="index.html" class="back-link">← Volver a la plataforma</a>
+    <div style="margin-top:0.6rem;font-size:0.62rem">TSMC · Sistema contable v1.0</div>
+  </div>
+</aside>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">Resumen general</div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="todayDate"></div>
+      <div style="width:1px;height:20px;background:var(--border)"></div>
+      <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted)">Admin TSMC</div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab active" id="tab-resumen" onclick="switchTab('resumen')">Resumen</div>
+    <div class="tab" id="tab-cronograma" onclick="switchTab('cronograma')">Cronograma</div>
+    <div class="tab" id="tab-historial" onclick="switchTab('historial')">Historial</div>
+    <div class="tab" id="tab-portafolio" onclick="switchTab('portafolio')">Portafolio</div>
+    <div class="tab" id="tab-ledger" onclick="switchTab('ledger')" style="display:none">Libro mayor</div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══ PANEL: RESUMEN ═══ -->
+    <div class="panel active" id="panel-resumen">
+      <div class="kpi-grid" id="kpiGrid"></div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">Flujo de desembolsos — próximos 6 meses</div>
+          <div class="chart-wrap" style="height:220px"><canvas id="flowChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Distribución por plan</div>
+          <div class="chart-wrap" style="height:220px"><canvas id="planChart"></canvas></div>
+        </div>
+      </div>
+      <div class="charts-row" style="grid-template-columns:1fr 1fr">
+        <div class="chart-card">
+          <div class="chart-title">Capital por inversor (Top 8)</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="capitalChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Estado de pagos acumulado</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="statusChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Próximos pagos -->
+      <div class="section-header" style="margin-top:0.5rem">
+        <div class="section-title">Próximos <em>desembolsos</em></div>
+      </div>
+      <div class="table-wrap">
+        <table id="nextPaymentsTable">
+          <thead><tr>
+            <th>Inversor</th><th>Fecha</th><th>Monto</th><th>Tipo</th><th>Estado</th><th>Acción</th>
+          </tr></thead>
+          <tbody id="nextPaymentsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ PANEL: CRONOGRAMA ═══ -->
+    <div class="panel" id="panel-cronograma">
+      <div class="section-header">
+        <div class="section-title">Cronograma de <em>pagos</em></div>
+        <div class="filters">
+          <input type="text" class="filter-input" id="schedSearch" placeholder="Buscar inversor..." oninput="renderSchedule()">
+          <select class="filter-select" id="schedStatus" onchange="renderSchedule()">
+            <option value="">Todo</option>
+            <option value="pending">Pendiente</option>
+            <option value="overdue">Vencido</option>
+            <option value="paid">Pagado</option>
+          </select>
+          <select class="filter-select" id="schedInvestor" onchange="renderSchedule()">
+            <option value="">Todos los inversores</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Inversor</th><th>Fecha de pago</th><th>Tipo</th><th>Monto</th><th>Estado</th><th>Período</th><th>Acción</th>
+          </tr></thead>
+          <tbody id="scheduleTbody"></tbody>
+        </table>
+      </div>
+      <div id="schedEmpty" class="empty" style="display:none"><div class="empty-icon">◌</div>No se encontraron pagos con los filtros seleccionados.</div>
+    </div>
+
+    <!-- ═══ PANEL: HISTORIAL ═══ -->
+    <div class="panel" id="panel-historial">
+      <div class="section-header">
+        <div class="section-title">Historial de <em>transacciones</em></div>
+        <div class="filters">
+          <input type="text" class="filter-input" id="histSearch" placeholder="Buscar..." oninput="renderHistory()">
+          <select class="filter-select" id="histInvestor" onchange="renderHistory()">
+            <option value="">Todos</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Fecha de pago</th><th>Inversor</th><th>Monto</th><th>Tipo</th><th>N.° período</th><th>Cuenta destino</th><th>Ref.</th>
+          </tr></thead>
+          <tbody id="historyTbody"></tbody>
+        </table>
+      </div>
+      <div id="histEmpty" class="empty" style="display:none"><div class="empty-icon">◌</div>No hay transacciones registradas aún. Los pagos marcados como realizados aparecerán aquí.</div>
+    </div>
+
+    <!-- ═══ PANEL: PORTAFOLIO ═══ -->
+    <div class="panel" id="panel-portafolio">
+      <div class="section-header">
+        <div class="section-title">Portafolio <em>consolidado</em></div>
+      </div>
+      <div class="table-wrap">
+        <table class="portfolio-table">
+          <thead><tr>
+            <th>Inversor</th><th>Cédula</th><th>Plan</th><th>Capital</th>
+            <th>Pagado (periódico)</th><th>Pendiente (periódico)</th><th>Bono</th>
+            <th>Beneficio total</th><th>Avance</th><th>Estado</th>
+          </tr></thead>
+          <tbody id="portfolioTbody"></tbody>
+          <tfoot id="portfolioFoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ PANEL: LIBRO MAYOR (individual) ═══ -->
+    <div class="panel" id="panel-ledger">
+      <div id="ledgerHeader"></div>
+      <div class="section-title" style="margin-bottom:1rem;font-size:1.1rem">Libro de <em>pagos</em></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Período</th><th>Fecha programada</th><th>Monto</th><th>Tipo</th><th>Estado</th><th>Fecha de pago</th><th>Acción</th>
+          </tr></thead>
+          <tbody id="ledgerTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('confirmModal').classList.remove('open')">✕</button>
+    <div class="modal-title">Confirmar desembolso</div>
+    <div class="modal-sub">Registra el pago como realizado en el sistema contable.</div>
+    <div class="modal-row" id="confirmDetails"></div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="document.getElementById('confirmModal').classList.remove('open')">Cancelar</button>
+      <button class="btn-confirm" id="confirmBtn">Confirmar pago ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+
+const INVESTORS_RAW = [
+  { id:1,  fn:'Daniel Stiven', ln:'Martínez Cano',    age:28, phone:'+57 310 4521893', bank:'Ahorros Davivienda: 0021456789',    loc:'Bogotá',       ced:'1020456789', amt:7000000,  months:24, plan:'standard',  freq:'monthly',   elapsed:8,  status:'active'  },
+  { id:2,  fn:'Valentina',     ln:'Herrera Duque',    age:32, phone:'+57 315 8821047', bank:'Ahorros Bancolombia: 4512367890',   loc:'Medellín',     ced:'1035214567', amt:3000000,  months:12, plan:'standard',  freq:'biweekly',  elapsed:11, status:'active'  },
+  { id:3,  fn:'Andrés Felipe', ln:'Ríos Montoya',     age:45, phone:'+57 300 6634512', bank:'Cte. Bancolombia: 2234561289',      loc:'Cali',         ced:'79456123',   amt:5000000,  months:18, plan:'reinvest',  freq:'monthly',   elapsed:6,  status:'active'  },
+  { id:4,  fn:'María Camila',  ln:'Ospina Londoño',   age:29, phone:'+57 321 7743290', bank:'Ahorros Nequi: 3218874561',         loc:'Pereira',      ced:'1088234567', amt:2000000,  months:12, plan:'standard',  freq:'monthly',   elapsed:3,  status:'active'  },
+  { id:5,  fn:'Juan Pablo',    ln:'Arango Velásquez', age:38, phone:'+57 312 5541872', bank:'Ahorros Bancolombia: 5561237890',   loc:'Medellín',     ced:'71345678',   amt:10000000, months:24, plan:'reinvest',  freq:'monthly',   elapsed:14, status:'active'  },
+  { id:6,  fn:'Luisa',         ln:'Cardona Mejía',    age:24, phone:'+57 318 9921034', bank:'Ahorros Davivienda: 1120056789',    loc:'Manizales',    ced:'1116523891', amt:1500000,  months:12, plan:'standard',  freq:'biweekly',  elapsed:2,  status:'active'  },
+  { id:7,  fn:'Carlos',        ln:'Zapata Giraldo',   age:52, phone:'+57 304 4412398', bank:'Cte. BBVA: 0098761234',             loc:'Bucaramanga',  ced:'13456789',   amt:15000000, months:36, plan:'reinvest',  freq:'monthly',   elapsed:20, status:'active'  },
+  { id:8,  fn:'Natalia',       ln:'Salazar Patiño',   age:27, phone:'+57 316 2234876', bank:'Ahorros Bancolombia: 6671239870',   loc:'Barranquilla', ced:'1045987234', amt:2500000,  months:18, plan:'standard',  freq:'biweekly',  elapsed:9,  status:'active'  },
+  { id:9,  fn:'Sebastián',     ln:'Gutiérrez Hoyos',  age:35, phone:'+57 322 8876541', bank:'Ahorros Nequi: 3227894561',         loc:'Medellín',     ced:'1037895612', amt:4000000,  months:12, plan:'reinvest',  freq:'monthly',   elapsed:5,  status:'active'  },
+  { id:10, fn:'Isabela',       ln:'Restrepo Ochoa',   age:31, phone:'+57 308 3312459', bank:'Ahorros Davivienda: 2234561870',    loc:'Envigado',     ced:'1035612890', amt:3500000,  months:24, plan:'standard',  freq:'monthly',   elapsed:17, status:'active'  },
+  { id:11, fn:'Tomás',         ln:'Vásquez Cárdenas', age:41, phone:'+57 311 5567892', bank:'Cte. Bancolombia: 8890234561',      loc:'Bogotá',       ced:'79891234',   amt:8000000,  months:24, plan:'reinvest',  freq:'biweekly',  elapsed:11, status:'active'  },
+  { id:12, fn:'Camila',        ln:'Morales Quintero', age:26, phone:'+57 319 6634120', bank:'Ahorros Bancolombia: 1023456781',   loc:'Sabaneta',     ced:'1037645123', amt:1000000,  months:12, plan:'standard',  freq:'monthly',   elapsed:1,  status:'active'  },
+  { id:13, fn:'Felipe',        ln:'Osorio Restrepo',  age:20, phone:'+57 314 8393014', bank:'Ahorros Bancolombia: 8834886316',   loc:'Medellín',     ced:'1001056123', amt:1000000,  months:12, plan:'standard',  freq:'monthly',   elapsed:0,  status:'pending' },
+];
+
+// ══════════════════════════════════════
+//  CALC ENGINE
+// ══════════════════════════════════════
+function calcParams(inv) {
+  const ratio     = inv.amt / 1000000;
+  const isBiw     = inv.freq === 'biweekly';
+  const isRei     = inv.plan === 'reinvest';
+  const monthly   = isRei ? 75000 : 50000;
+  const biweekly  = isRei ? 37500 : 25000;
+  const bonusMult = isRei ? 1.2 : 1.0;
+  const periodic  = Math.round((isBiw ? biweekly : monthly) * ratio);
+  const periods   = isBiw ? inv.months * 2 : inv.months;
+  const totalPer  = periodic * periods;
+  const bonus     = Math.round(500000 * ratio * bonusMult);
+  const totalBen  = totalPer + bonus;
+  const roi       = ((totalBen / inv.amt) * 100).toFixed(1);
+  return { periodic, periods, totalPer, bonus, totalBen, roi };
+}
+
+// ══════════════════════════════════════
+//  PAYMENT SCHEDULE GENERATOR
+// ══════════════════════════════════════
+// startDate: TODAY minus elapsed months (approx)
+function getStartDate(inv) {
+  const d = new Date(TODAY);
+  d.setMonth(d.getMonth() - inv.elapsed);
+  d.setDate(1);
+  return d;
+}
+
+function generatePayments(inv) {
+  const start  = getStartDate(inv);
+  const p      = calcParams(inv);
+  const isBiw  = inv.freq === 'biweekly';
+  const payments = [];
+  let refId = 1;
+
+  for (let i = 0; i < p.periods; i++) {
+    let date = new Date(start);
+    if (isBiw) {
+      const monthOffset = Math.floor(i / 2);
+      const isSecond    = i % 2 === 1;
+      date.setMonth(date.getMonth() + monthOffset);
+      if (isSecond) date.setDate(15);
+      else date.setDate(1);
+    } else {
+      date.setMonth(date.getMonth() + i);
+      date.setDate(1);
+    }
+
+    const isLast = i === p.periods - 1;
+    const amount = isLast ? p.periodic + p.bonus : p.periodic;
+    const type   = isLast ? 'periódico + bono' : 'periódico';
+
+    // Determine status
+    let status;
+    const isPast = date < TODAY;
+    const elapsedPeriods = isBiw ? inv.elapsed * 2 : inv.elapsed;
+    if (i < elapsedPeriods) {
+      status = 'paid';
+    } else if (isPast) {
+      status = 'overdue';
+    } else {
+      status = 'pending';
+    }
+
+    payments.push({
+      payId: `${inv.id}-${refId++}`,
+      invId: inv.id,
+      date,
+      amount,
+      type,
+      status,
+      isLast,
+      periodNum: i + 1,
+      paidDate: status === 'paid' ? new Date(date.getTime() + Math.random() * 3 * 86400000) : null,
+    });
+  }
+  return payments;
+}
+
+// Build all payments
+let allPayments = [];
+INVESTORS_RAW.forEach(inv => {
+  allPayments.push(...generatePayments(inv));
+});
+
+// Transaction log (initially = already paid ones)
+let transactions = allPayments
+  .filter(p => p.status === 'paid')
+  .map(p => ({ ...p, paidDate: p.paidDate || new Date() }));
+
+// ══════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════
+const fmt     = n => '$' + Math.round(n).toLocaleString('es-CO');
+const fmtDate = d => d.toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
+const fmtDateShort = d => d.toLocaleDateString('es-CO', { day:'2-digit', month:'short' });
+const invName = id => { const i = INVESTORS_RAW.find(x => x.id === id); return i ? i.fn + ' ' + i.ln : '—'; };
+const invBank = id => { const i = INVESTORS_RAW.find(x => x.id === id); return i ? i.bank : '—'; };
+const initials = inv => (inv.fn[0] + inv.ln[0]).toUpperCase();
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + type; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// ══════════════════════════════════════
+//  SIDEBAR
+// ══════════════════════════════════════
+function buildSidebar() {
+  const el = document.getElementById('sidebarInvestors');
+  el.innerHTML = INVESTORS_RAW.map(inv => `
+    <div class="investor-nav-item" onclick="openLedger(${inv.id})">
+      <div class="inv-nav-avatar">${initials(inv)}</div>
+      <div class="inv-nav-name">${inv.fn} ${inv.ln}</div>
+      <div class="inv-nav-badge ${inv.status}">${inv.status === 'active' ? 'Act.' : 'Pend.'}</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════
+//  TAB SWITCHING
+// ══════════════════════════════════════
+const TABS = ['resumen','cronograma','historial','portafolio','ledger'];
+const TITLES = { resumen:'Resumen general', cronograma:'Cronograma de pagos', historial:'Historial de transacciones', portafolio:'Portafolio consolidado', ledger:'Libro mayor' };
+
+function switchTab(tab) {
+  TABS.forEach(t => {
+    document.getElementById('panel-'+t).classList.toggle('active', t===tab);
+    const el = document.getElementById('tab-'+t);
+    if (el) el.classList.toggle('active', t===tab);
+  });
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.textContent.trim().toLowerCase().includes(tab.substring(0,4)));
+  });
+  document.getElementById('topbarTitle').textContent = TITLES[tab] || '';
+  if (tab === 'cronograma') renderSchedule();
+  if (tab === 'historial')  renderHistory();
+  if (tab === 'portafolio') renderPortfolio();
+  if (tab === 'resumen')    renderResumen();
+}
+
+// ══════════════════════════════════════
+//  RESUMEN
+// ══════════════════════════════════════
+function renderResumen() {
+  // KPIs
+  const totalCapital  = INVESTORS_RAW.reduce((s,i) => s + i.amt, 0);
+  const totalBenefits = INVESTORS_RAW.reduce((s,i) => s + calcParams(i).totalBen, 0);
+  const paidAmt       = transactions.reduce((s,t) => s + t.amount, 0);
+  const pendingPays   = allPayments.filter(p => p.status === 'pending' || p.status === 'overdue');
+  const pendingAmt    = pendingPays.reduce((s,p) => s + p.amount, 0);
+  const overdueCount  = allPayments.filter(p => p.status === 'overdue').length;
+
+  // Next 30 days payments
+  const soon = new Date(TODAY); soon.setDate(soon.getDate() + 30);
+  const upcomingAmt = pendingPays.filter(p => p.date <= soon).reduce((s,p) => s + p.amount, 0);
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">Capital total en gestión</div>
+      <div class="kpi-value">${fmt(totalCapital)}</div>
+      <div class="kpi-sub">${INVESTORS_RAW.length} inversores registrados</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Total desembolsado</div>
+      <div class="kpi-value">${fmt(paidAmt)}</div>
+      <div class="kpi-sub">${transactions.length} pagos realizados</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Pendiente por desembolsar</div>
+      <div class="kpi-value">${fmt(pendingAmt)}</div>
+      <div class="kpi-sub">${overdueCount} pagos vencidos · ${fmt(upcomingAmt)} próx. 30 días</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Beneficios totales comprometidos</div>
+      <div class="kpi-value">${fmt(totalBenefits)}</div>
+      <div class="kpi-sub">Sobre ${fmt(totalCapital)} de capital</div>
+    </div>`;
+
+  renderCharts();
+  renderNextPayments();
+}
+
+function renderCharts() {
+  const gold  = '#c9a84c';
+  const gold2 = '#e8c96e';
+  const muted = '#4a4845';
+  const grid  = 'rgba(255,255,255,0.04)';
+
+  // Flow chart — next 6 months
+  const months6 = [];
+  for (let m = 0; m < 6; m++) {
+    const d = new Date(TODAY);
+    d.setMonth(d.getMonth() + m);
+    months6.push({ label: d.toLocaleDateString('es-CO',{month:'short',year:'2-digit'}), total: 0 });
+  }
+  allPayments.filter(p => p.status !== 'paid').forEach(p => {
+    for (let m = 0; m < 6; m++) {
+      const start = new Date(TODAY); start.setMonth(start.getMonth() + m); start.setDate(1);
+      const end   = new Date(start); end.setMonth(end.getMonth() + 1);
+      if (p.date >= start && p.date < end) months6[m].total += p.amount;
+    }
+  });
+
+  const ctxFlow = document.getElementById('flowChart').getContext('2d');
+  if (window._flowChart) window._flowChart.destroy();
+  window._flowChart = new Chart(ctxFlow, {
+    type: 'bar',
+    data: {
+      labels: months6.map(m => m.label),
+      datasets: [{ data: months6.map(m => m.total), backgroundColor: months6.map((_,i) => i===0 ? gold : 'rgba(201,168,76,0.3)'), borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmt(ctx.raw) } } },
+      scales: {
+        x: { ticks: { color: '#6e6c66', font: { family: 'DM Mono', size: 9 } }, grid: { color: grid } },
+        y: { ticks: { color: '#6e6c66', font: { family: 'DM Mono', size: 9 }, callback: v => '$'+(v/1000000).toFixed(1)+'M' }, grid: { color: grid } }
+      }
+    }
+  });
+
+  // Plan donut
+  const stdCount = INVESTORS_RAW.filter(i => i.plan === 'standard').length;
+  const reiCount = INVESTORS_RAW.filter(i => i.plan === 'reinvest').length;
+  const ctxPlan  = document.getElementById('planChart').getContext('2d');
+  if (window._planChart) window._planChart.destroy();
+  window._planChart = new Chart(ctxPlan, {
+    type: 'doughnut',
+    data: { labels: ['Plan Estándar', 'Plan Reinversión'], datasets: [{ data: [stdCount, reiCount], backgroundColor: ['rgba(201,168,76,0.5)', gold2], borderColor: '#0f0f12', borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: '#6e6c66', font: { family: 'DM Mono', size: 9 }, boxWidth: 10, padding: 14 } }, tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.raw + ' inversores' } } } }
+  });
+
+  // Capital bar
+  const top8 = [...INVESTORS_RAW].sort((a,b) => b.amt - a.amt).slice(0, 8);
+  const ctxCap = document.getElementById('capitalChart').getContext('2d');
+  if (window._capChart) window._capChart.destroy();
+  window._capChart = new Chart(ctxCap, {
+    type: 'bar',
+    data: {
+      labels: top8.map(i => i.fn.split(' ')[0]),
+      datasets: [{ data: top8.map(i => i.amt), backgroundColor: 'rgba(201,168,76,0.35)', borderColor: gold, borderWidth: 1 }]
+    },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmt(ctx.raw) } } },
+      scales: {
+        x: { ticks: { color: '#6e6c66', font: { family: 'DM Mono', size: 9 }, callback: v => '$'+(v/1000000).toFixed(0)+'M' }, grid: { color: grid } },
+        y: { ticks: { color: '#9a9890', font: { family: 'DM Mono', size: 9 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Status donut
+  const paidC   = allPayments.filter(p => p.status === 'paid').length;
+  const pendC   = allPayments.filter(p => p.status === 'pending').length;
+  const overC   = allPayments.filter(p => p.status === 'overdue').length;
+  const ctxSt   = document.getElementById('statusChart').getContext('2d');
+  if (window._stChart) window._stChart.destroy();
+  window._stChart = new Chart(ctxSt, {
+    type: 'doughnut',
+    data: { labels: ['Pagados', 'Pendientes', 'Vencidos'], datasets: [{ data: [paidC, pendC, overC], backgroundColor: ['rgba(61,158,106,0.6)', 'rgba(184,140,58,0.5)', 'rgba(184,85,101,0.5)'], borderColor: '#0f0f12', borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { color: '#6e6c66', font: { family: 'DM Mono', size: 9 }, boxWidth: 10, padding: 12 } }, tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.raw + ' pagos' } } } }
+  });
+}
+
+function renderNextPayments() {
+  const upcoming = allPayments
+    .filter(p => p.status !== 'paid')
+    .sort((a,b) => a.date - b.date)
+    .slice(0, 10);
+
+  const tbody = document.getElementById('nextPaymentsTbody');
+  tbody.innerHTML = upcoming.map(p => {
+    const inv = INVESTORS_RAW.find(i => i.id === p.invId);
+    const ini = initials(inv);
+    const st  = statusBadge(p.status);
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:0.6rem">
+        <div style="width:28px;height:28px;background:var(--bg4);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:0.75rem;color:var(--gold);flex-shrink:0">${ini}</div>
+        <span style="font-size:0.82rem">${inv.fn} ${inv.ln}</span></div></td>
+      <td class="mono text-muted">${fmtDate(p.date)}</td>
+      <td class="mono text-gold">${fmt(p.amount)}</td>
+      <td class="text-muted" style="font-size:0.75rem;text-transform:capitalize">${p.type}</td>
+      <td>${st}</td>
+      <td>${p.status !== 'paid' ? `<button class="pay-btn" onclick="confirmPay('${p.payId}')">Registrar pago</button>` : '<span style="color:var(--text-dim);font-size:0.72rem">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+//  SCHEDULE
+// ══════════════════════════════════════
+function renderSchedule() {
+  populateInvestorFilter('schedInvestor');
+  const search    = document.getElementById('schedSearch').value.toLowerCase();
+  const statusF   = document.getElementById('schedStatus').value;
+  const investorF = parseInt(document.getElementById('schedInvestor').value) || 0;
+
+  let filtered = allPayments.filter(p => {
+    const inv  = INVESTORS_RAW.find(i => i.id === p.invId);
+    const name = (inv.fn + ' ' + inv.ln).toLowerCase();
+    return (!search || name.includes(search)) &&
+           (!statusF || p.status === statusF) &&
+           (!investorF || p.invId === investorF);
+  }).sort((a,b) => a.date - b.date);
+
+  const tbody = document.getElementById('scheduleTbody');
+  const empty = document.getElementById('schedEmpty');
+  empty.style.display = filtered.length ? 'none' : 'block';
+
+  tbody.innerHTML = filtered.map((p, idx) => {
+    const inv = INVESTORS_RAW.find(i => i.id === p.invId);
+    return `<tr>
+      <td class="mono text-dim">${idx+1}</td>
+      <td style="font-size:0.82rem">${inv.fn} ${inv.ln}</td>
+      <td class="mono">${fmtDate(p.date)}</td>
+      <td class="text-muted" style="font-size:0.75rem;text-transform:capitalize">${p.type}</td>
+      <td class="mono text-gold">${fmt(p.amount)}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td class="mono text-muted" style="font-size:0.72rem">${p.periodNum} / ${calcParams(inv).periods}</td>
+      <td>${p.status !== 'paid' ? `<button class="pay-btn" onclick="confirmPay('${p.payId}')">Pagar</button>` : `<span class="mono text-dim" style="font-size:0.7rem">${fmtDateShort(p.paidDate)}</span>`}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+//  HISTORY
+// ══════════════════════════════════════
+function renderHistory() {
+  populateInvestorFilter('histInvestor');
+  const search    = document.getElementById('histSearch').value.toLowerCase();
+  const investorF = parseInt(document.getElementById('histInvestor').value) || 0;
+
+  let filtered = transactions.filter(t => {
+    const inv  = INVESTORS_RAW.find(i => i.id === t.invId);
+    const name = (inv.fn + ' ' + inv.ln).toLowerCase();
+    return (!search || name.includes(search)) && (!investorF || t.invId === investorF);
+  }).sort((a,b) => b.paidDate - a.paidDate);
+
+  const tbody = document.getElementById('historyTbody');
+  const empty = document.getElementById('histEmpty');
+  empty.style.display = filtered.length ? 'none' : 'block';
+
+  let ref = 100001;
+  tbody.innerHTML = filtered.map(t => {
+    const inv = INVESTORS_RAW.find(i => i.id === t.invId);
+    return `<tr>
+      <td class="mono text-muted">${fmtDate(t.paidDate)}</td>
+      <td style="font-size:0.82rem">${inv.fn} ${inv.ln}</td>
+      <td class="mono text-gold">${fmt(t.amount)}</td>
+      <td class="text-muted" style="font-size:0.75rem;text-transform:capitalize">${t.type}</td>
+      <td class="mono text-dim">${t.periodNum}</td>
+      <td class="mono text-muted" style="font-size:0.72rem">${inv.bank}</td>
+      <td class="mono text-dim" style="font-size:0.7rem">TXN-${ref++}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+//  PORTFOLIO
+// ══════════════════════════════════════
+function renderPortfolio() {
+  let totCap = 0, totPaid = 0, totPend = 0, totBonus = 0, totBen = 0;
+  const tbody = document.getElementById('portfolioTbody');
+
+  tbody.innerHTML = INVESTORS_RAW.map(inv => {
+    const p    = calcParams(inv);
+    const paid = allPayments.filter(x => x.invId === inv.id && x.status === 'paid').reduce((s,x) => s + x.amount, 0);
+    const pend = allPayments.filter(x => x.invId === inv.id && x.status !== 'paid').reduce((s,x) => s + x.amount, 0);
+    const prog = Math.min(100, Math.round((inv.elapsed / inv.months) * 100));
+
+    totCap += inv.amt; totPaid += paid; totPend += pend; totBonus += p.bonus; totBen += p.totalBen;
+
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:0.7rem">
+          <div style="width:30px;height:30px;background:var(--gold-dim);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:0.75rem;color:var(--gold);flex-shrink:0">${initials(inv)}</div>
+          <span style="cursor:pointer;color:var(--text)" onclick="openLedger(${inv.id})">${inv.fn} ${inv.ln}</span>
+        </div>
+      </td>
+      <td class="mono text-dim" style="font-size:0.72rem">${inv.ced}</td>
+      <td><span class="badge ${inv.plan === 'standard' ? 'inactive' : 'active'}">${inv.plan === 'standard' ? 'Estándar' : 'Reinversión'}</span></td>
+      <td class="mono text-gold">${fmt(inv.amt)}</td>
+      <td class="mono text-success">${fmt(paid)}</td>
+      <td class="mono text-warning">${fmt(pend)}</td>
+      <td class="mono text-muted">${fmt(p.bonus)}</td>
+      <td class="mono" style="color:var(--gold-light);font-weight:400">${fmt(p.totalBen)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:0.6rem">
+          <div class="mini-progress"><div class="mini-fill" style="width:${prog}%"></div></div>
+          <span class="mono text-dim" style="font-size:0.7rem">${prog}%</span>
+        </div>
+      </td>
+      <td><span class="badge ${inv.status}">${inv.status === 'active' ? 'Activo' : 'Pendiente'}</span></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('portfolioFoot').innerHTML = `
+    <tr style="border-top:1px solid var(--border);background:var(--bg3)">
+      <td colspan="3" style="font-family:'Cormorant Garamond',serif;font-size:0.9rem;padding:0.9rem;color:var(--text-muted)">Totales</td>
+      <td class="mono" style="color:var(--gold-light);font-size:0.9rem;padding:0.75rem 0.9rem">${fmt(totCap)}</td>
+      <td class="mono text-success" style="padding:0.75rem 0.9rem">${fmt(totPaid)}</td>
+      <td class="mono text-warning" style="padding:0.75rem 0.9rem">${fmt(totPend)}</td>
+      <td class="mono text-muted" style="padding:0.75rem 0.9rem">${fmt(totBonus)}</td>
+      <td class="mono" style="color:var(--gold-light);font-weight:400;padding:0.75rem 0.9rem">${fmt(totBen)}</td>
+      <td colspan="2" style="padding:0.75rem 0.9rem"></td>
+    </tr>`;
+}
+
+// ══════════════════════════════════════
+//  LEDGER (individual)
+// ══════════════════════════════════════
+function openLedger(invId) {
+  const inv    = INVESTORS_RAW.find(i => i.id === invId);
+  const p      = calcParams(inv);
+  const myPays = allPayments.filter(x => x.invId === invId);
+  const paidAmt = myPays.filter(x => x.status === 'paid').reduce((s,x) => s + x.amount, 0);
+  const pendAmt = myPays.filter(x => x.status !== 'paid').reduce((s,x) => s + x.amount, 0);
+
+  document.getElementById('ledgerHeader').innerHTML = `
+    <div class="ledger-investor-card">
+      <div class="ledger-avatar">${initials(inv)}</div>
+      <div>
+        <div class="ledger-info-name">${inv.fn} ${inv.ln}</div>
+        <div class="ledger-info-meta">
+          C.C. ${inv.ced} · ${inv.phone} · ${inv.loc}<br>
+          ${inv.bank} · Plan ${inv.plan === 'standard' ? 'Estándar' : 'Reinversión'} · ${inv.freq === 'biweekly' ? 'Quincenal' : 'Mensual'} · ${inv.months} meses
+        </div>
+      </div>
+      <div class="ledger-kpis">
+        <div><span class="ledger-kpi-val">${fmt(inv.amt)}</span><span class="ledger-kpi-label">Capital</span></div>
+        <div><span class="ledger-kpi-val" style="color:var(--success)">${fmt(paidAmt)}</span><span class="ledger-kpi-label">Pagado</span></div>
+        <div><span class="ledger-kpi-val" style="color:var(--warning)">${fmt(pendAmt)}</span><span class="ledger-kpi-label">Pendiente</span></div>
+        <div><span class="ledger-kpi-val">${fmt(p.totalBen)}</span><span class="ledger-kpi-label">Beneficio total</span></div>
+      </div>
+    </div>`;
+
+  document.getElementById('ledgerTbody').innerHTML = myPays.map(pay => `
+    <tr>
+      <td class="mono text-muted">${pay.periodNum} / ${p.periods}</td>
+      <td class="mono">${fmtDate(pay.date)}</td>
+      <td class="mono text-gold">${fmt(pay.amount)}</td>
+      <td class="text-muted" style="font-size:0.75rem;text-transform:capitalize">${pay.type}</td>
+      <td>${statusBadge(pay.status)}</td>
+      <td class="mono text-dim" style="font-size:0.72rem">${pay.paidDate ? fmtDate(pay.paidDate) : '—'}</td>
+      <td>${pay.status !== 'paid' ? `<button class="pay-btn" onclick="confirmPay('${pay.payId}',true,${invId})">Registrar pago</button>` : '<span style="color:var(--success);font-size:0.7rem">✓ Pagado</span>'}</td>
+    </tr>`).join('');
+
+  // Show ledger tab
+  document.getElementById('tab-ledger').style.display = '';
+  switchTab('ledger');
+
+  // Highlight in sidebar
+  document.querySelectorAll('.investor-nav-item').forEach((el, i) => {
+    el.classList.toggle('selected', INVESTORS_RAW[i]?.id === invId);
+  });
+}
+
+// ══════════════════════════════════════
+//  PAYMENT CONFIRMATION
+// ══════════════════════════════════════
+let pendingPayId = null, returnToLedger = null;
+
+function confirmPay(payId, fromLedger = false, ledgerId = null) {
+  const pay = allPayments.find(p => p.payId === payId);
+  if (!pay) return;
+  const inv = INVESTORS_RAW.find(i => i.id === pay.invId);
+  pendingPayId  = payId;
+  returnToLedger = fromLedger ? ledgerId : null;
+
+  document.getElementById('confirmDetails').innerHTML = `
+    <div class="modal-detail"><div class="modal-detail-label">Inversor</div><div class="modal-detail-value">${inv.fn} ${inv.ln}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">C.C.</div><div class="modal-detail-value">${inv.ced}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Monto</div><div class="modal-detail-value" style="color:var(--gold-light)">${fmt(pay.amount)}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Fecha programada</div><div class="modal-detail-value">${fmtDate(pay.date)}</div></div>
+    <div class="modal-detail" style="grid-column:1/-1"><div class="modal-detail-label">Cuenta destino</div><div class="modal-detail-value">${inv.bank}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Período</div><div class="modal-detail-value">${pay.periodNum} / ${calcParams(inv).periods}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Tipo</div><div class="modal-detail-value" style="text-transform:capitalize">${pay.type}</div></div>`;
+
+  document.getElementById('confirmBtn').onclick = () => executePay();
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+function executePay() {
+  const pay = allPayments.find(p => p.payId === pendingPayId);
+  if (!pay) return;
+  pay.status   = 'paid';
+  pay.paidDate = new Date();
+
+  transactions.push({ ...pay });
+  document.getElementById('confirmModal').classList.remove('open');
+  showToast('Pago registrado correctamente · ' + fmt(pay.amount));
+
+  // Refresh current view
+  const activeTab = TABS.find(t => document.getElementById('panel-'+t).classList.contains('active'));
+  if (activeTab === 'resumen')    renderResumen();
+  if (activeTab === 'cronograma') renderSchedule();
+  if (activeTab === 'historial')  renderHistory();
+  if (activeTab === 'portafolio') renderPortfolio();
+  if (returnToLedger)             openLedger(returnToLedger);
+  else if (activeTab === 'ledger' && pay.invId) openLedger(pay.invId);
+  pendingPayId = null;
+}
+
+// ══════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════
+function statusBadge(status) {
+  const map = { paid: '✓ Pagado', pending: '◷ Pendiente', overdue: '⚠ Vencido' };
+  return `<span class="badge ${status}">${map[status] || status}</span>`;
+}
+
+let filtersPopulated = false;
+function populateInvestorFilter(id) {
+  const el = document.getElementById(id);
+  if (el.dataset.populated) return;
+  INVESTORS_RAW.forEach(inv => {
+    const opt = document.createElement('option');
+    opt.value = inv.id;
+    opt.textContent = inv.fn + ' ' + inv.ln;
+    el.appendChild(opt);
+  });
+  el.dataset.populated = '1';
+}
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+document.getElementById('todayDate').textContent = TODAY.toLocaleDateString('es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+document.getElementById('confirmModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirmModal')) document.getElementById('confirmModal').classList.remove('open');
+});
+
+buildSidebar();
+renderResumen();
+</script>
+</body>
+</html>
