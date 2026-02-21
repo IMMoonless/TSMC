@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TSMC — Plataforma de Inversión</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8c96e;
+    --gold-dim: rgba(201,168,76,0.13);
+    --bg: #0a0a0b;
+    --bg2: #111114;
+    --bg3: #18181d;
+    --border: rgba(201,168,76,0.18);
+    --text: #e8e6e0;
+    --text-muted: #7a7870;
+    --success: #4caf7d;
+    --danger: #cf6679;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; line-height: 1.6; overflow-x: hidden; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+  /* NAV */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 3rem; background: rgba(10,10,11,0.88); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+  .nav-logo { display: flex; align-items: center; gap: 0.8rem; text-decoration: none; }
+  .logo-mark { width: 36px; height: 36px; background: linear-gradient(135deg, var(--gold), var(--gold-light)); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 1.1rem; color: #0a0a0b; clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); }
+  .logo-text { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 300; letter-spacing: 0.15em; color: var(--gold-light); }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.3s; }
+  .nav-links a:hover { color: var(--gold); }
+
+  /* HERO */
+  .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8rem 2rem 4rem; position: relative; overflow: hidden; text-align: center; }
+  .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(201,168,76,0.07) 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 20% 80%, rgba(201,168,76,0.04) 0%, transparent 60%); }
+  .hero-tag { display: inline-block; font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--border); padding: 0.35rem 1rem; margin-bottom: 2rem; animation: fadeUp 0.8s ease both; }
+  .hero h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(3rem, 7vw, 6rem); font-weight: 300; line-height: 1.05; letter-spacing: 0.02em; margin-bottom: 1.5rem; animation: fadeUp 0.8s 0.1s ease both; }
+  .hero h1 em { font-style: italic; color: var(--gold-light); }
+  .hero-sub { max-width: 520px; font-size: 0.95rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 3rem; animation: fadeUp 0.8s 0.2s ease both; }
+  .hero-stats { display: flex; gap: 4rem; animation: fadeUp 0.8s 0.3s ease both; margin-bottom: 3rem; }
+  .hero-stat { text-align: center; }
+  .hero-stat-num { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 300; color: var(--gold-light); display: block; }
+  .hero-stat-label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+  .btn-primary { display: inline-flex; align-items: center; gap: 0.6rem; background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: #0a0a0b; padding: 0.9rem 2.2rem; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; border: none; cursor: pointer; text-decoration: none; transition: opacity 0.3s, transform 0.3s; animation: fadeUp 0.8s 0.4s ease both; font-family: 'DM Sans', sans-serif; }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+  .scroll-line { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 0.5rem; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); animation: fadeUp 1s 0.8s ease both; }
+  .scroll-line::after { content: ''; width: 1px; height: 40px; background: linear-gradient(to bottom, var(--gold), transparent); animation: scrollPulse 2s infinite; }
+
+  /* SECTIONS */
+  section { padding: 6rem 0; }
+  .container { max-width: 1160px; margin: 0 auto; padding: 0 2rem; }
+  .section-tag { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.8rem; }
+  .section-tag::before { content: ''; width: 24px; height: 1px; background: var(--gold); }
+  .section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 300; line-height: 1.15; margin-bottom: 1rem; }
+  .section-title em { font-style: italic; color: var(--gold-light); }
+  .divider { width: 60px; height: 1px; background: linear-gradient(to right, var(--gold), transparent); margin: 1.5rem 0; }
+
+  /* PLANS */
+  #planes { background: var(--bg2); }
+  .plans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5px; background: var(--border); border: 1px solid var(--border); margin-top: 3rem; }
+  .plan-card { background: var(--bg2); padding: 2.5rem; position: relative; overflow: hidden; transition: background 0.3s; }
+  .plan-card.featured { background: var(--bg3); }
+  .plan-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(to right, var(--gold), transparent); opacity: 0; transition: opacity 0.3s; }
+  .plan-card:hover::before { opacity: 1; }
+  .plan-badge { display: inline-block; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 0.25rem 0.7rem; border: 1px solid var(--border); color: var(--gold); margin-bottom: 1.5rem; }
+  .plan-badge.featured { background: var(--gold-dim); }
+  .plan-name { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 300; margin-bottom: 0.5rem; }
+  .plan-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2rem; line-height: 1.7; }
+  .plan-metrics { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 2rem; }
+  .plan-metric { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.85rem; }
+  .plan-metric-label { color: var(--text-muted); }
+  .plan-metric-value { font-family: 'DM Mono', monospace; color: var(--gold-light); font-size: 0.9rem; }
+  .plan-total { background: var(--gold-dim); border: 1px solid var(--border); padding: 1rem 1.2rem; display: flex; justify-content: space-between; align-items: center; }
+  .plan-total-label { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+  .plan-total-value { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 300; color: var(--gold-light); }
+
+  /* SIMULATOR */
+  #simulador { background: var(--bg); }
+  .sim-layout { display: grid; grid-template-columns: 1fr 1.2fr; gap: 3rem; margin-top: 3rem; align-items: start; }
+  .sim-form { display: flex; flex-direction: column; gap: 1.5rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+  .form-label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+  .form-input, .form-select { background: var(--bg2); border: 1px solid var(--border); color: var(--text); padding: 0.85rem 1rem; font-family: 'DM Mono', monospace; font-size: 0.9rem; outline: none; transition: border-color 0.3s; width: 100%; appearance: none; -webkit-appearance: none; }
+  .form-input:focus, .form-select:focus { border-color: var(--gold); }
+  .sim-result { background: var(--bg2); border: 1px solid var(--border); padding: 2rem; }
+  .sim-result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--border); }
+  .sim-result-title { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 300; color: var(--gold-light); }
+  .sim-plan-badge { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.25rem 0.7rem; border: 1px solid var(--gold); color: var(--gold); background: var(--gold-dim); }
+  .sim-metrics { display: flex; flex-direction: column; }
+  .sim-metric { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.85rem; }
+  .sim-metric-label { color: var(--text-muted); }
+  .sim-metric-value { font-family: 'DM Mono', monospace; color: var(--gold-light); }
+  .sim-metric.highlight { background: var(--gold-dim); margin: 0 -2rem; padding: 0.9rem 2rem; }
+  .sim-metric.highlight .sim-metric-value { color: var(--gold-light); font-size: 1rem; }
+  .chart-wrap { position: relative; height: 220px; margin-top: 1.5rem; }
+  .sim-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem; line-height: 1.6; border-left: 2px solid var(--border); padding-left: 0.8rem; }
+
+  /* INVESTORS */
+  #inversores { background: var(--bg2); }
+  .investors-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; }
+  .btn-add { display: inline-flex; align-items: center; gap: 0.5rem; background: transparent; border: 1px solid var(--border); color: var(--gold); padding: 0.65rem 1.3rem; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: background 0.3s, border-color 0.3s; font-family: 'DM Sans', sans-serif; }
+  .btn-add:hover { background: var(--gold-dim); border-color: var(--gold); }
+  .investors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+  .investor-card { background: var(--bg2); padding: 2rem; transition: background 0.3s; cursor: pointer; }
+  .investor-card:hover { background: var(--bg3); }
+  .investor-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.2rem; }
+  .investor-avatar { width: 44px; height: 44px; background: var(--gold-dim); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--gold); }
+  .investor-status { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.2rem 0.6rem; border: 1px solid; }
+  .investor-status.active { color: var(--success); border-color: var(--success); background: rgba(76,175,125,0.08); }
+  .investor-status.pending { color: var(--gold); border-color: var(--gold); background: var(--gold-dim); }
+  .investor-name { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 300; margin-bottom: 0.2rem; }
+  .investor-meta { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.2rem; }
+  .investor-metrics { display: flex; gap: 1.5rem; }
+  .inv-metric-val { font-family: 'DM Mono', monospace; font-size: 0.95rem; color: var(--gold-light); display: block; }
+  .inv-metric-label { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+  .investor-progress { margin-top: 1.2rem; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+  .progress-bar { height: 2px; background: var(--bg3); width: 100%; position: relative; overflow: hidden; }
+  .progress-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(to right, var(--gold), var(--gold-light)); }
+  .investor-actions { display: flex; gap: 0.5rem; margin-top: 1.2rem; }
+  .btn-sm { flex: 1; padding: 0.5rem; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; background: transparent; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.3s; }
+  .btn-sm:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-sm.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* POLICY */
+  #politicas { background: var(--bg); }
+  .policy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5px; background: var(--border); border: 1px solid var(--border); margin-top: 2.5rem; }
+  .policy-card { background: var(--bg); padding: 2rem; }
+  .policy-icon { font-size: 1.5rem; margin-bottom: 1rem; color: var(--gold); }
+  .policy-title { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 300; margin-bottom: 0.7rem; }
+  .policy-text { font-size: 0.82rem; color: var(--text-muted); line-height: 1.8; }
+
+  /* FOOTER */
+  footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 3rem 0; text-align: center; }
+  .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 300; letter-spacing: 0.15em; color: var(--gold-light); margin-bottom: 0.5rem; }
+  .footer-tagline { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 1.5rem; }
+  .footer-legal { font-size: 0.7rem; color: var(--text-muted); max-width: 600px; margin: 0 auto; line-height: 1.7; }
+
+  /* MODALS BASE */
+  .modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(10,10,11,0.92); backdrop-filter: blur(8px); align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); padding: 2.5rem; max-width: 600px; width: 92%; max-height: 88vh; overflow-y: auto; position: relative; animation: modalIn 0.3s ease; }
+  .modal-close { position: absolute; top: 1.2rem; right: 1.2rem; background: none; border: 1px solid var(--border); color: var(--text-muted); width: 32px; height: 32px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+  .modal-close:hover { border-color: var(--danger); color: var(--danger); }
+  .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 300; margin-bottom: 0.3rem; }
+  .modal-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2rem; }
+  .modal-footer { margin-top: 1.5rem; display: flex; gap: 1rem; }
+  .btn-save { flex: 1; padding: 0.9rem; background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: #0a0a0b; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'DM Sans', sans-serif; transition: opacity 0.3s; }
+  .btn-save:hover { opacity: 0.85; }
+  .btn-save:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-cancel { padding: 0.9rem 1.5rem; background: transparent; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'DM Sans', sans-serif; transition: all 0.3s; }
+  .btn-cancel:hover { border-color: var(--text-muted); color: var(--text); }
+  .modal-form { display: flex; flex-direction: column; gap: 1.2rem; }
+  .modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  /* STEP FLOW */
+  .step { display: none; }
+  .step.active { display: block; }
+  .step-indicator { display: flex; align-items: center; gap: 0; margin-bottom: 2rem; }
+  .step-dot { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--text-muted); transition: all 0.4s; flex-shrink: 0; }
+  .step-dot.done { background: var(--gold); border-color: var(--gold); color: #0a0a0b; }
+  .step-dot.current { border-color: var(--gold); color: var(--gold); }
+  .step-line { flex: 1; height: 1px; background: var(--border); transition: background 0.4s; }
+  .step-line.done { background: var(--gold); }
+
+  /* CONSENT */
+  .consent-box { background: var(--bg3); border: 1px solid var(--border); padding: 1.5rem; max-height: 250px; overflow-y: auto; font-size: 0.78rem; color: var(--text-muted); line-height: 1.85; margin-bottom: 1.2rem; }
+  .consent-box h4 { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 400; color: var(--text); margin-bottom: 0.5rem; margin-top: 1rem; }
+  .consent-box h4:first-child { margin-top: 0; }
+  .consent-check { display: flex; align-items: flex-start; gap: 0.8rem; padding: 1rem; border: 1px solid var(--border); cursor: pointer; transition: border-color 0.3s; background: var(--bg3); }
+  .consent-check:hover { border-color: var(--gold); }
+  .consent-check input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--gold); margin-top: 2px; cursor: pointer; flex-shrink: 0; }
+  .consent-check-text { font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; }
+  .consent-check-text strong { color: var(--text); font-weight: 400; }
+
+  /* SEARCH STEP */
+  .search-row { display: flex; gap: 0.8rem; align-items: flex-end; }
+  .search-row .form-group { flex: 1; }
+  .btn-search { padding: 0.85rem 1.4rem; background: transparent; border: 1px solid var(--gold); color: var(--gold); cursor: pointer; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'DM Sans', sans-serif; transition: all 0.3s; white-space: nowrap; flex-shrink: 0; }
+  .btn-search:hover { background: var(--gold-dim); }
+  .search-result { display: none; background: var(--bg3); border: 1px solid var(--border); overflow: hidden; margin-top: 1.2rem; animation: fadeUp 0.4s ease; }
+  .search-result.show { display: block; }
+  .search-result-header { padding: 1rem 1.2rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; }
+  .search-result-avatar { width: 42px; height: 42px; background: var(--gold-dim); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--gold); flex-shrink: 0; }
+  .search-result-name { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 300; }
+  .search-result-sub { font-size: 0.72rem; color: var(--text-muted); }
+  .search-result-verified { margin-left: auto; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.6rem; border: 1px solid var(--success); color: var(--success); background: rgba(76,175,125,0.08); }
+  .search-result-data { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+  .search-result-item { padding: 0.7rem 1rem; background: var(--bg3); }
+  .search-result-item-label { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem; }
+  .search-result-item-value { font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--text); }
+  .search-notfound { display: none; background: var(--bg3); border: 1px solid var(--border); padding: 1.5rem; text-align: center; margin-top: 1.2rem; animation: fadeUp 0.3s ease; }
+  .search-notfound.show { display: block; }
+  .search-notfound p { font-size: 0.82rem; color: var(--text-muted); }
+  .searching-anim { display: none; padding: 1.5rem; text-align: center; margin-top: 1.2rem; border: 1px solid var(--border); background: var(--bg3); }
+  .searching-anim.show { display: block; }
+  .searching-dots { font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--gold); letter-spacing: 0.15em; }
+
+  /* INVESTMENT STEP */
+  .inv-step-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 300; margin-bottom: 0.3rem; }
+  .inv-step-sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+  .plan-select-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 0.5rem; }
+  .plan-select-card { border: 1px solid var(--border); padding: 1.2rem; cursor: pointer; transition: all 0.3s; position: relative; background: var(--bg3); }
+  .plan-select-card:hover { border-color: var(--gold); }
+  .plan-select-card.selected { border-color: var(--gold); background: var(--gold-dim); }
+  .plan-select-card input[type=radio] { position: absolute; opacity: 0; }
+  .plan-select-name { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 300; margin-bottom: 0.3rem; color: var(--text); }
+  .plan-select-detail { font-size: 0.72rem; color: var(--text-muted); line-height: 1.5; }
+  .plan-select-roi { font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--gold); margin-top: 0.5rem; }
+  .freq-select-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 0.5rem; }
+  .freq-card { border: 1px solid var(--border); padding: 1rem; cursor: pointer; transition: all 0.3s; background: var(--bg3); text-align: center; }
+  .freq-card:hover { border-color: var(--gold); }
+  .freq-card.selected { border-color: var(--gold); background: var(--gold-dim); }
+  .freq-name { font-size: 0.85rem; color: var(--text); margin-bottom: 0.2rem; }
+  .freq-detail { font-size: 0.7rem; color: var(--text-muted); }
+  .inv-summary { background: var(--gold-dim); border: 1px solid var(--border); padding: 1.2rem; margin-top: 1.2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+  .inv-summary-label { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+  .inv-summary-value { font-family: 'DM Mono', monospace; font-size: 0.85rem; color: var(--gold-light); margin-top: 0.1rem; }
+
+  /* DETAIL */
+  .detail-section { margin-bottom: 1.5rem; }
+  .detail-section-title { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.6rem; }
+  .detail-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+  .detail-item { padding: 0.7rem; background: var(--bg3); }
+  .detail-item-label { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.3rem; }
+  .detail-item-value { font-family: 'DM Mono', monospace; font-size: 0.85rem; color: var(--text); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 2rem; right: 2rem; z-index: 300; background: var(--bg2); border: 1px solid var(--gold); padding: 1rem 1.5rem; font-size: 0.82rem; color: var(--text); transform: translateY(100px); opacity: 0; transition: all 0.4s ease; max-width: 340px; line-height: 1.5; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--success); }
+  .toast.danger { border-color: var(--danger); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes scrollPulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.97) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    .hero-stats { gap: 2rem; }
+    .sim-layout { grid-template-columns: 1fr; }
+    .plans-grid, .policy-grid, .plan-select-grid, .freq-select-grid { grid-template-columns: 1fr; }
+    .modal-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-mark">T</div>
+    <span class="logo-text">TSMC</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#planes">Planes</a></li>
+    <li><a href="#simulador">Simulador</a></li>
+    <li><a href="#inversores">Inversores</a></li>
+    <li><a href="#politicas">Políticas</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Plataforma de Inversión — Colombia</div>
+  <h1>Capital que trabaja<br>para <em>tu futuro</em></h1>
+  <p class="hero-sub">TSMC ofrece planes de retorno estructurado en pesos colombianos, con ciclos definidos, pagos periódicos garantizados y reinversión estratégica.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="hero-stat-num">110%</span><span class="hero-stat-label">Retorno Plan Estándar</span></div>
+    <div class="hero-stat"><span class="hero-stat-num">140%</span><span class="hero-stat-label">Retorno Reinversión</span></div>
+    <div class="hero-stat"><span class="hero-stat-num">12–24</span><span class="hero-stat-label">Meses de plazo</span></div>
+  </div>
+  <a href="#simulador" class="btn-primary">Simular mi inversión →</a>
+  <div class="scroll-line">Explorar</div>
+</div>
+
+<!-- PLANES -->
+<section id="planes">
+  <div class="container">
+    <div class="section-tag">Modalidades de inversión</div>
+    <h2 class="section-title">Elige tu <em>plan</em></h2>
+    <div class="divider"></div>
+    <div class="plans-grid">
+      <div class="plan-card">
+        <div class="plan-badge">Plan Estándar</div>
+        <h3 class="plan-name">Retorno Periódico</h3>
+        <p class="plan-desc">Recibe pagos regulares durante toda la vigencia de tu inversión. Ideal para quienes buscan liquidez constante sin comprometer el capital inicial.</p>
+        <div class="plan-metrics">
+          <div class="plan-metric"><span class="plan-metric-label">Inversión mínima</span><span class="plan-metric-value">$1.000.000</span></div>
+          <div class="plan-metric"><span class="plan-metric-label">Plazo base</span><span class="plan-metric-value">12 meses</span></div>
+          <div class="plan-metric"><span class="plan-metric-label">Pago quincenal</span><span class="plan-metric-value">$25.000</span></div>
+          <div class="plan-metric"><span class="plan-metric-label">Pago mensual (alt.)</span><span class="plan-metric-value">$50.000</span></div>
+          <div class="plan-metric"><span class="plan-metric-label">Bono al vencimiento</span><span class="plan-metric-value">$500.000</span></div>
+          <div class="plan-metric"><span class="plan-metric-label">Devolución del capital</span><span class="plan-metric-value">$1.000.000</span></div>
+        </div>
+        <div class="plan-total"><span class="plan-total-label">Beneficio total</span><span class="plan-total-value">$1.100.000</span></div>
+      </div>
+      <div class="plan-card featured">
+        <div class="plan-badge featured">Plan Reinversión</div>
+        <h3 class="plan-name">Crecimiento Acelerado</h3>
+        <p class="plan-desc">Al comprometerte con una reinversión al término del plazo, obtienes un retorno mensual mayor y un beneficio total superior con ajuste de interés.</p>
+        <div class="plan-metrics">
+          <div class="plan-metric"><span class="plan-metric-label">Inversión mínima</span><span class="plan-metric-value">$1.000.000</span></div>
+          <div class="plan-metric"><span class="plan-metric-label">Plazo base</span><span class="plan-metric-value">12 meses</span></div>
+          <div class="plan-metric"><span class="plan-metric-label">Pago mensual</span><span class="plan-metric-value">$75.000</span></div>
+          <div class="plan-metric"><span class="plan-metric-label">Bono al vencimiento</span><span class="plan-metric-value">$500.000</span></div>
+          <div class="plan-metric"><span class="plan-metric-label">Ajuste interés siguiente ciclo</span><span class="plan-metric-value">+variable</span></div>
+          <div class="plan-metric"><span class="plan-metric-label">Devolución del capital</span><span class="plan-metric-value">$1.000.000</span></div>
+        </div>
+        <div class="plan-total"><span class="plan-total-label">Beneficio total</span><span class="plan-total-value">$1.400.000</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SIMULADOR -->
+<section id="simulador">
+  <div class="container">
+    <div class="section-tag">Herramienta de cálculo</div>
+    <h2 class="section-title">Simula tu <em>inversión</em></h2>
+    <div class="divider"></div>
+    <div class="sim-layout">
+      <div class="sim-form">
+        <div class="form-group"><label class="form-label">Monto de inversión (COP)</label><input type="number" id="simAmount" class="form-input" value="1000000" min="1000000" step="100000"></div>
+        <div class="form-group"><label class="form-label">Plazo</label><select id="simMonths" class="form-select"><option value="12">12 meses</option><option value="18">18 meses</option><option value="24">24 meses</option><option value="36">36 meses</option></select></div>
+        <div class="form-group"><label class="form-label">Plan</label><select id="simPlan" class="form-select"><option value="standard">Plan Estándar</option><option value="reinvest">Plan Reinversión</option></select></div>
+        <div class="form-group"><label class="form-label">Frecuencia de pago</label><select id="simFreq" class="form-select"><option value="biweekly">Quincenal</option><option value="monthly">Mensual</option></select></div>
+        <button class="btn-primary" onclick="calcular()" style="width:100%;justify-content:center;">Calcular retorno</button>
+      </div>
+      <div class="sim-result">
+        <div class="sim-result-header"><div class="sim-result-title">Proyección de retorno</div><div class="sim-plan-badge" id="simPlanBadge">—</div></div>
+        <div class="sim-metrics" id="simMetrics"></div>
+        <div class="chart-wrap"><canvas id="simChart"></canvas></div>
+        <div class="sim-note" id="simNote"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INVERSORES -->
+<section id="inversores">
+  <div class="container">
+    <div class="investors-header">
+      <div>
+        <div class="section-tag">Gestión de portafolio</div>
+        <h2 class="section-title">Inversores <em>activos</em></h2>
+      </div>
+      <button class="btn-add" onclick="startOnboarding()">+ Nuevo inversor</button>
+    </div>
+    <div class="investors-grid" id="investorsGrid"></div>
+  </div>
+</section>
+
+<!-- POLÍTICAS -->
+<section id="politicas">
+  <div class="container">
+    <div class="section-tag">Marco legal</div>
+    <h2 class="section-title">Políticas y <em>condiciones</em></h2>
+    <div class="divider"></div>
+    <div class="policy-grid">
+      <div class="policy-card"><div class="policy-icon">⚖</div><h3 class="policy-title">Naturaleza del acuerdo</h3><p class="policy-text">El vínculo entre TSMC y el inversor queda formalizado en el momento en que TSMC realice el primer desembolso en la cuenta bancaria registrada. A partir de dicho evento, se adjuntará vía correo electrónico el comprobante de afiliación efectiva.</p></div>
+      <div class="policy-card"><div class="policy-icon">💳</div><h3 class="policy-title">Método de desembolso</h3><p class="policy-text">TSMC realizará las transferencias del porcentaje de retorno acordado directamente a la cuenta bancaria principal registrada, en la periodicidad pactada (quincenal o mensual), sin comisiones de gestión para el inversor.</p></div>
+      <div class="policy-card"><div class="policy-icon">📅</div><h3 class="policy-title">Vencimiento y devolución</h3><p class="policy-text">Al finalizar el plazo pactado, TSMC procederá a devolver el 100% del capital invertido junto con el bono de vencimiento correspondiente. En el plan de reinversión, se aplicará un ajuste de interés favorable para el siguiente ciclo.</p></div>
+      <div class="policy-card"><div class="policy-icon">🔒</div><h3 class="policy-title">Confidencialidad</h3><p class="policy-text">TSMC se compromete a mantener la absoluta reserva de los datos personales, bancarios y financieros del inversor. Esta información no será divulgada a terceros bajo ningún concepto, salvo requerimiento legal expreso de autoridad competente.</p></div>
+      <div class="policy-card"><div class="policy-icon">🔄</div><h3 class="policy-title">Condiciones de reinversión</h3><p class="policy-text">El inversor que opte por el Plan Reinversión deberá manifestar su intención al momento de suscribir el acuerdo inicial. La reinversión se hará efectiva automáticamente al término del plazo, con ajuste de interés pactado.</p></div>
+      <div class="policy-card"><div class="policy-icon">⚠</div><h3 class="policy-title">Consideraciones de riesgo</h3><p class="policy-text">El presente esquema de retorno corresponde a una simulación académica y no constituye asesoría financiera certificada. Las tasas descritas son referenciales con fines de investigación y no implican garantía legal de rendimiento bajo el marco de la Superintendencia Financiera de Colombia.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">TSMC</div>
+  <div class="footer-tagline">Capital · Confianza · Crecimiento — Medellín, Colombia</div>
+  <div class="footer-legal">Este sitio corresponde a un proyecto de investigación académica. Los planes y tasas de retorno aquí descritos son simulaciones con fines educativos y no constituyen una oferta pública de valores ni asesoría financiera regulada. TSMC no está registrada como entidad financiera ante la Superintendencia Financiera de Colombia. © 2024 TSMC.</div>
+</footer>
+
+<!-- ══════════════════════════════════════ -->
+<!-- ONBOARDING MODAL (3 pasos)             -->
+<!-- ══════════════════════════════════════ -->
+<div class="modal-overlay" id="onboardingModal">
+  <div class="modal" style="max-width:620px">
+    <button class="modal-close" onclick="closeModal('onboardingModal')">✕</button>
+
+    <!-- Indicador de pasos -->
+    <div class="step-indicator">
+      <div class="step-dot current" id="dot1">1</div>
+      <div class="step-line" id="line1"></div>
+      <div class="step-dot" id="dot2">2</div>
+      <div class="step-line" id="line2"></div>
+      <div class="step-dot" id="dot3">3</div>
+    </div>
+
+    <!-- PASO 1: Consentimiento -->
+    <div class="step active" id="step1">
+      <h2 class="modal-title">Autorización de datos</h2>
+      <p class="modal-subtitle">Lee y acepta la política de tratamiento de datos antes de continuar.</p>
+      <div class="consent-box">
+        <h4>Política de Tratamiento de Datos Personales — TSMC</h4>
+        <p>En cumplimiento de lo establecido en la Ley 1581 de 2012 (Ley de Habeas Data) y el Decreto 1377 de 2013 de la República de Colombia, TSMC informa al titular que los datos personales suministrados serán objeto de tratamiento bajo los siguientes términos:</p>
+        <h4>1. Responsable del tratamiento</h4>
+        <p>TSMC, con domicilio en la ciudad de Medellín, Antioquia, Colombia, es la entidad responsable del tratamiento de los datos personales recolectados a través de esta plataforma.</p>
+        <h4>2. Finalidad del tratamiento</h4>
+        <p>Los datos recolectados serán utilizados exclusivamente para: (i) la gestión del vínculo de inversión entre el titular y TSMC; (ii) la realización de transferencias y desembolsos periódicos a la cuenta bancaria registrada; (iii) el envío de comunicaciones relacionadas con el estado de la inversión; y (iv) el cumplimiento de obligaciones legales aplicables.</p>
+        <h4>3. Datos recolectados</h4>
+        <p>Se recolectarán datos de identificación (nombre, cédula de ciudadanía), datos de contacto (teléfono, correo electrónico, dirección), datos financieros (monto de inversión, cuenta bancaria) y datos demográficos (edad, ubicación).</p>
+        <h4>4. Derechos del titular</h4>
+        <p>El titular tiene derecho a conocer, actualizar, rectificar y suprimir sus datos personales, así como a revocar la autorización otorgada, en los términos de la normativa colombiana vigente. Para ejercer estos derechos podrá comunicarse directamente con TSMC.</p>
+        <h4>5. Transferencia de datos</h4>
+        <p>TSMC no transferirá ni cederá los datos personales a terceros no autorizados. Los datos únicamente podrán ser compartidos con entidades financieras involucradas en los procesos de desembolso, exclusivamente en la medida necesaria para ejecutar la inversión pactada.</p>
+        <h4>6. Conservación y vigencia</h4>
+        <p>Los datos serán conservados durante el tiempo que dure la relación de inversión y el período legalmente exigible posterior a su terminación. La presente autorización tiene vigencia indefinida desde su otorgamiento, hasta que el titular la revoque expresamente.</p>
+      </div>
+      <label class="consent-check">
+        <input type="checkbox" id="consentCheck" onchange="updateConsentBtn()">
+        <div class="consent-check-text"><strong>Acepto voluntariamente</strong> la política de tratamiento de datos personales de TSMC, en los términos descritos anteriormente, y autorizo el uso de mi información para los fines enunciados, de conformidad con la Ley 1581 de 2012.</div>
+      </label>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal('onboardingModal')">Cancelar</button>
+        <button class="btn-save" id="consentBtn" disabled onclick="goStep(2)">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- PASO 2: Búsqueda -->
+    <div class="step" id="step2">
+      <h2 class="modal-title">Identificar inversor</h2>
+      <p class="modal-subtitle">Ingresa el nombre completo y el número de cédula para verificar la identidad del inversor en el sistema.</p>
+      <div class="modal-form">
+        <div class="form-group"><label class="form-label">Nombre completo</label><input type="text" id="searchName" class="form-input" placeholder="Nombre y apellidos completos"></div>
+        <div class="search-row">
+          <div class="form-group"><label class="form-label">Número de cédula</label><input type="text" id="searchCedula" class="form-input" placeholder="Ej: 1001056123" onkeydown="if(event.key==='Enter')doSearch()"></div>
+          <button class="btn-search" onclick="doSearch()">Buscar</button>
+        </div>
+      </div>
+      <div class="searching-anim" id="searchingAnim"><div class="searching-dots" id="searchDots">Verificando identidad...</div><div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.5rem">Consultando base de datos de inversores registrados</div></div>
+      <div class="search-notfound" id="searchNotFound"><p>No se encontró ningún inversor registrado con los datos ingresados.<br>Verifica el nombre y número de cédula e intenta nuevamente.</p></div>
+      <div class="search-result" id="searchResultPanel">
+        <div class="search-result-header">
+          <div class="search-result-avatar" id="srAvatar"></div>
+          <div><div class="search-result-name" id="srName"></div><div class="search-result-sub" id="srSub"></div></div>
+          <div class="search-result-verified">✓ Verificado</div>
+        </div>
+        <div class="search-result-data" id="srData"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="goStep(1)">← Atrás</button>
+        <button class="btn-save" id="searchNextBtn" disabled onclick="goStep(3)">Configurar inversión →</button>
+      </div>
+    </div>
+
+    <!-- PASO 3: Configuración inversión -->
+    <div class="step" id="step3">
+      <div class="inv-step-title" id="invStepTitle">Configurar inversión</div>
+      <div class="inv-step-sub" id="invStepSub">Define el monto, el plan y la frecuencia de pago.</div>
+      <div class="modal-form">
+        <div class="modal-row">
+          <div class="form-group"><label class="form-label">Monto a invertir (COP)</label><input type="number" id="invAmount" class="form-input" value="1000000" min="1000000" step="100000" oninput="updateInvSummary()"></div>
+          <div class="form-group"><label class="form-label">Plazo</label><select id="invMonths" class="form-select" onchange="updateInvSummary()"><option value="12">12 meses</option><option value="18">18 meses</option><option value="24">24 meses</option><option value="36">36 meses</option></select></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Plan de inversión</label>
+          <div class="plan-select-grid">
+            <div class="plan-select-card selected" id="planCardStd" onclick="selectPlan('standard')"><div class="plan-select-name">Plan Estándar</div><div class="plan-select-detail">Pagos periódicos + bono al vencimiento</div><div class="plan-select-roi">110% beneficio</div></div>
+            <div class="plan-select-card" id="planCardRei" onclick="selectPlan('reinvest')"><div class="plan-select-name">Plan Reinversión</div><div class="plan-select-detail">Mayor retorno mensual + ajuste siguiente ciclo</div><div class="plan-select-roi">140% beneficio</div></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Frecuencia de pago</label>
+          <div class="freq-select-grid">
+            <div class="freq-card selected" id="freqCardM" onclick="selectFreq('monthly')"><div class="freq-name">Mensual</div><div class="freq-detail">1 desembolso por mes</div></div>
+            <div class="freq-card" id="freqCardQ" onclick="selectFreq('biweekly')"><div class="freq-name">Quincenal</div><div class="freq-detail">2 desembolsos por mes</div></div>
+          </div>
+        </div>
+        <div class="inv-summary" id="invSummary"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="goStep(2)">← Atrás</button>
+        <button class="btn-save" onclick="finalizeInvestor()">Registrar inversor ✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal" style="max-width:660px">
+    <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+    <h2 class="modal-title" id="detailName"></h2>
+    <p class="modal-subtitle" id="detailMeta"></p>
+    <div id="detailContent"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('detailModal')">Cerrar</button>
+      <button class="btn-save" id="detailEditBtn">Editar inversor</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    <h2 class="modal-title">Editar inversor</h2>
+    <p class="modal-subtitle">Modifica los datos del inversor seleccionado.</p>
+    <div class="modal-form">
+      <input type="hidden" id="editId">
+      <div class="modal-row">
+        <div class="form-group"><label class="form-label">Monto invertido (COP)</label><input type="number" id="eAmount" class="form-input" min="1000000" step="100000"></div>
+        <div class="form-group"><label class="form-label">Plazo</label><select id="eMonths" class="form-select"><option value="12">12 meses</option><option value="18">18 meses</option><option value="24">24 meses</option><option value="36">36 meses</option></select></div>
+      </div>
+      <div class="modal-row">
+        <div class="form-group"><label class="form-label">Plan</label><select id="ePlan" class="form-select"><option value="standard">Plan Estándar</option><option value="reinvest">Plan Reinversión</option></select></div>
+        <div class="form-group"><label class="form-label">Frecuencia</label><select id="eFreq" class="form-select"><option value="monthly">Mensual</option><option value="biweekly">Quincenal</option></select></div>
+      </div>
+      <div class="modal-row">
+        <div class="form-group"><label class="form-label">Meses transcurridos</label><input type="number" id="eElapsed" class="form-input" min="0"></div>
+        <div class="form-group"><label class="form-label">Estado</label><select id="eStatus" class="form-select"><option value="active">Activo</option><option value="pending">Pendiente</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('editModal')">Cancelar</button>
+      <button class="btn-save" onclick="saveEdit()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── REGISTRY (personas pre-cargadas en el sistema) ───
+const REGISTRY = [
+  {
+    key: 'felipe',
+    firstName: 'Felipe',
+    lastName: 'Osorio Restrepo',
+    age: 20,
+    phone: '+57 314 8393014',
+    bankAccount: 'Ahorros Bancolombia: 8834886316',
+    location: 'Medellín — Colombia',
+    email: null,
+    cedulas: ['1001056123'],
+    names: ['felipe', 'osorio', 'restrepo'],
+  }
+];
+
+// ─── UTILS ───
+const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  if (id === 'onboardingModal') resetOnboarding();
+}
+
+// ─── CALC ENGINE ───
+function getCalcParams(amount, months, plan, freq) {
+  const ratio     = amount / 1000000;
+  const perMonth  = plan === 'reinvest' ? 75000 : 50000;
+  const perBiw    = plan === 'reinvest' ? 37500 : 25000;
+  const bonusMult = plan === 'reinvest' ? 1.2 : 1.0;
+
+  let periodicPayment, totalPeriodic;
+  if (freq === 'biweekly') {
+    periodicPayment = Math.round(perBiw * ratio);
+    totalPeriodic   = periodicPayment * months * 2;
+  } else {
+    periodicPayment = Math.round(perMonth * ratio);
+    totalPeriodic   = periodicPayment * months;
+  }
+
+  const endBonus     = Math.round(500000 * ratio * bonusMult);
+  const totalBenefit = totalPeriodic + endBonus;
+  const roi          = ((totalBenefit / amount) * 100).toFixed(1);
+  return { periodicPayment, totalPeriodic, endBonus, totalBenefit, roi };
+}
+
+// ─── SIMULATOR ───
+let simChart = null;
+function calcular() {
+  const amount  = parseFloat(document.getElementById('simAmount').value) || 1000000;
+  const months  = parseInt(document.getElementById('simMonths').value);
+  const plan    = document.getElementById('simPlan').value;
+  const freq    = document.getElementById('simFreq').value;
+  const p       = getCalcParams(amount, months, plan, freq);
+  const fLabel  = freq === 'biweekly' ? 'Quincenal' : 'Mensual';
+
+  document.getElementById('simPlanBadge').textContent = plan === 'standard' ? 'Plan Estándar' : 'Plan Reinversión';
+  document.getElementById('simMetrics').innerHTML = [
+    ['Monto invertido',        fmt(amount)],
+    ['Plazo',                  months + ' meses'],
+    [fLabel + ' a recibir',    fmt(p.periodicPayment)],
+    ['Total pagos periódicos', fmt(p.totalPeriodic)],
+    ['Bono al vencimiento',    fmt(p.endBonus)],
+    ['Devolución de capital',  fmt(amount)],
+  ].map(([l,v]) => `<div class="sim-metric"><span class="sim-metric-label">${l}</span><span class="sim-metric-value">${v}</span></div>`).join('') +
+    `<div class="sim-metric highlight"><span class="sim-metric-label">Beneficio total neto</span><span class="sim-metric-value">${fmt(p.totalBenefit)} · ROI ${p.roi}%</span></div>`;
+
+  document.getElementById('simNote').textContent = plan === 'reinvest'
+    ? 'Con el plan de reinversión, TSMC aplicará un ajuste de interés favorable al inicio del siguiente ciclo.'
+    : 'El capital invertido será devuelto íntegramente al vencimiento, junto con el bono de término.';
+
+  const labels = [], data = [];
+  let acc = 0;
+  const perM = freq === 'biweekly' ? p.periodicPayment * 2 : p.periodicPayment;
+  for (let m = 1; m <= months; m++) { labels.push('M'+m); acc += perM; data.push(acc + (m === months ? p.endBonus : 0)); }
+
+  const ctx = document.getElementById('simChart').getContext('2d');
+  if (simChart) simChart.destroy();
+  simChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderColor: '#c9a84c', backgroundColor: 'rgba(201,168,76,0.07)', borderWidth: 1.5, pointRadius: 2, tension: 0.4, fill: true }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#7a7870', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#7a7870', font: { family: 'DM Mono', size: 10 }, callback: v => '$'+(v/1000).toFixed(0)+'k' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+// ─── INVESTORS DATA — 12 ficticios ───
+let investors = [
+  { id:1,  firstName:'Daniel Stiven', lastName:'Martínez Cano',    age:28, phone:'+57 310 4521893', bankAccount:'Ahorros Davivienda: 0021456789',    location:'Bogotá — Colombia',      email:'daniel.mc@gmail.com',      cedula:'1020456789', amount:7000000,  months:24, plan:'standard',  freq:'monthly',   elapsed:8,  status:'active' },
+  { id:2,  firstName:'Valentina',     lastName:'Herrera Duque',    age:32, phone:'+57 315 8821047', bankAccount:'Ahorros Bancolombia: 4512367890',   location:'Medellín — Colombia',    email:'val.herrera@hotmail.com',  cedula:'1035214567', amount:3000000,  months:12, plan:'standard',  freq:'biweekly',  elapsed:11, status:'active' },
+  { id:3,  firstName:'Andrés Felipe', lastName:'Ríos Montoya',     age:45, phone:'+57 300 6634512', bankAccount:'Corriente Bancolombia: 2234561289', location:'Cali — Colombia',        email:'afrios@outlook.com',       cedula:'79456123',   amount:5000000,  months:18, plan:'reinvest',  freq:'monthly',   elapsed:6,  status:'active' },
+  { id:4,  firstName:'María Camila',  lastName:'Ospina Londoño',   age:29, phone:'+57 321 7743290', bankAccount:'Ahorros Nequi: 3218874561',         location:'Pereira — Colombia',     email:'mcospina@gmail.com',       cedula:'1088234567', amount:2000000,  months:12, plan:'standard',  freq:'monthly',   elapsed:3,  status:'active' },
+  { id:5,  firstName:'Juan Pablo',    lastName:'Arango Velásquez', age:38, phone:'+57 312 5541872', bankAccount:'Ahorros Bancolombia: 5561237890',   location:'Medellín — Colombia',    email:'jparango@empresa.co',      cedula:'71345678',   amount:10000000, months:24, plan:'reinvest',  freq:'monthly',   elapsed:14, status:'active' },
+  { id:6,  firstName:'Luisa',         lastName:'Cardona Mejía',    age:24, phone:'+57 318 9921034', bankAccount:'Ahorros Davivienda: 1120056789',    location:'Manizales — Colombia',   email:'luisa.cardona@gmail.com',  cedula:'1116523891', amount:1500000,  months:12, plan:'standard',  freq:'biweekly',  elapsed:2,  status:'active' },
+  { id:7,  firstName:'Carlos',        lastName:'Zapata Giraldo',   age:52, phone:'+57 304 4412398', bankAccount:'Corriente BBVA: 0098761234',         location:'Bucaramanga — Colombia', email:'czapata@bbva.net',         cedula:'13456789',   amount:15000000, months:36, plan:'reinvest',  freq:'monthly',   elapsed:20, status:'active' },
+  { id:8,  firstName:'Natalia',       lastName:'Salazar Patiño',   age:27, phone:'+57 316 2234876', bankAccount:'Ahorros Bancolombia: 6671239870',   location:'Barranquilla — Colombia',email:'nataliasp@gmail.com',      cedula:'1045987234', amount:2500000,  months:18, plan:'standard',  freq:'biweekly',  elapsed:9,  status:'active' },
+  { id:9,  firstName:'Sebastián',     lastName:'Gutiérrez Hoyos',  age:35, phone:'+57 322 8876541', bankAccount:'Ahorros Nequi: 3227894561',         location:'Medellín — Colombia',    email:'seb.g@outlook.com',        cedula:'1037895612', amount:4000000,  months:12, plan:'reinvest',  freq:'monthly',   elapsed:5,  status:'active' },
+  { id:10, firstName:'Isabela',       lastName:'Restrepo Ochoa',   age:31, phone:'+57 308 3312459', bankAccount:'Ahorros Davivienda: 2234561870',    location:'Envigado — Colombia',    email:'isa.restrepo@gmail.com',   cedula:'1035612890', amount:3500000,  months:24, plan:'standard',  freq:'monthly',   elapsed:17, status:'active' },
+  { id:11, firstName:'Tomás',         lastName:'Vásquez Cárdenas', age:41, phone:'+57 311 5567892', bankAccount:'Corriente Bancolombia: 8890234561', location:'Bogotá — Colombia',      email:'tomasvc@ing.co',           cedula:'79891234',   amount:8000000,  months:24, plan:'reinvest',  freq:'biweekly',  elapsed:11, status:'active' },
+  { id:12, firstName:'Camila',        lastName:'Morales Quintero', age:26, phone:'+57 319 6634120', bankAccount:'Ahorros Bancolombia: 1023456781',   location:'Sabaneta — Colombia',    email:'cmorales@hotmail.com',     cedula:'1037645123', amount:1000000,  months:12, plan:'standard',  freq:'monthly',   elapsed:1,  status:'active' },
+];
+let nextId = 13;
+
+// ─── RENDER INVESTORS ───
+function getProgress(inv) { return Math.min(100, Math.round((inv.elapsed / inv.months) * 100)); }
+
+function renderInvestors() {
+  const g = document.getElementById('investorsGrid');
+  if (!investors.length) { g.innerHTML = '<div style="padding:3rem;text-align:center;color:var(--text-muted);grid-column:1/-1">No hay inversores registrados.</div>'; return; }
+  g.innerHTML = investors.map(inv => {
+    const p   = getCalcParams(inv.amount, inv.months, inv.plan, inv.freq);
+    const prg = getProgress(inv);
+    const ini = (inv.firstName[0] + inv.lastName[0]).toUpperCase();
+    return `<div class="investor-card" onclick="viewInvestor(${inv.id})">
+      <div class="investor-card-top">
+        <div class="investor-avatar">${ini}</div>
+        <div class="investor-status ${inv.status}">${inv.status === 'active' ? 'Activo' : 'Pendiente'}</div>
+      </div>
+      <div class="investor-name">${inv.firstName} ${inv.lastName}</div>
+      <div class="investor-meta">Plan ${inv.plan === 'standard' ? 'Estándar' : 'Reinversión'} · ${inv.months} meses · Pago ${inv.freq === 'biweekly' ? 'quincenal' : 'mensual'}</div>
+      <div class="investor-metrics">
+        <div><span class="inv-metric-val">${fmt(inv.amount)}</span><span class="inv-metric-label">Invertido</span></div>
+        <div><span class="inv-metric-val">${fmt(p.periodicPayment)}</span><span class="inv-metric-label">Por período</span></div>
+        <div><span class="inv-metric-val">${fmt(p.totalBenefit)}</span><span class="inv-metric-label">Beneficio</span></div>
+      </div>
+      <div class="investor-progress">
+        <div class="progress-label"><span>Progreso</span><span>${prg}% — ${inv.elapsed}/${inv.months} meses</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${prg}%"></div></div>
+      </div>
+      <div class="investor-actions" onclick="event.stopPropagation()">
+        <button class="btn-sm" onclick="editInvestor(${inv.id})">Editar</button>
+        <button class="btn-sm danger" onclick="deleteInvestor(${inv.id})">Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function viewInvestor(id) {
+  const inv = investors.find(i => i.id === id);
+  if (!inv) return;
+  const p = getCalcParams(inv.amount, inv.months, inv.plan, inv.freq);
+  const fl = inv.freq === 'biweekly' ? 'Quincenal' : 'Mensual';
+  document.getElementById('detailName').textContent = inv.firstName + ' ' + inv.lastName;
+  document.getElementById('detailMeta').textContent = `Plan ${inv.plan === 'standard' ? 'Estándar' : 'Reinversión'} · ${inv.months} meses · ${inv.status === 'active' ? 'Activo' : 'Pendiente'}`;
+  document.getElementById('detailEditBtn').onclick = () => { closeModal('detailModal'); editInvestor(id); };
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title">Datos personales</div>
+      <div class="detail-grid">
+        ${inv.age ? `<div class="detail-item"><div class="detail-item-label">Edad</div><div class="detail-item-value">${inv.age} años</div></div>` : ''}
+        ${inv.cedula ? `<div class="detail-item"><div class="detail-item-label">Cédula</div><div class="detail-item-value">${inv.cedula}</div></div>` : ''}
+        ${inv.phone ? `<div class="detail-item"><div class="detail-item-label">Teléfono</div><div class="detail-item-value">${inv.phone}</div></div>` : ''}
+        ${inv.location ? `<div class="detail-item"><div class="detail-item-label">Ubicación</div><div class="detail-item-value">${inv.location}</div></div>` : ''}
+        ${inv.email ? `<div class="detail-item" style="grid-column:1/-1"><div class="detail-item-label">Correo</div><div class="detail-item-value">${inv.email}</div></div>` : ''}
+        ${inv.bankAccount ? `<div class="detail-item" style="grid-column:1/-1"><div class="detail-item-label">Cuenta bancaria</div><div class="detail-item-value">${inv.bankAccount}</div></div>` : ''}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Datos de inversión</div>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-item-label">Capital invertido</div><div class="detail-item-value" style="color:var(--gold-light)">${fmt(inv.amount)}</div></div>
+        <div class="detail-item"><div class="detail-item-label">Plazo</div><div class="detail-item-value">${inv.months} meses</div></div>
+        <div class="detail-item"><div class="detail-item-label">Pago ${fl.toLowerCase()}</div><div class="detail-item-value" style="color:var(--gold-light)">${fmt(p.periodicPayment)}</div></div>
+        <div class="detail-item"><div class="detail-item-label">Bono vencimiento</div><div class="detail-item-value">${fmt(p.endBonus)}</div></div>
+        <div class="detail-item"><div class="detail-item-label">Beneficio total</div><div class="detail-item-value" style="color:var(--gold-light)">${fmt(p.totalBenefit)}</div></div>
+        <div class="detail-item"><div class="detail-item-label">ROI</div><div class="detail-item-value">${p.roi}%</div></div>
+        <div class="detail-item"><div class="detail-item-label">Avance</div><div class="detail-item-value">${inv.elapsed}/${inv.months} meses (${getProgress(inv)}%)</div></div>
+        <div class="detail-item"><div class="detail-item-label">Estado</div><div class="detail-item-value">${inv.status === 'active' ? 'Activo' : 'Pendiente'}</div></div>
+      </div>
+    </div>`;
+  openModal('detailModal');
+}
+
+function editInvestor(id) {
+  const inv = investors.find(i => i.id === id);
+  if (!inv) return;
+  document.getElementById('editId').value   = id;
+  document.getElementById('eAmount').value  = inv.amount;
+  document.getElementById('eMonths').value  = inv.months;
+  document.getElementById('ePlan').value    = inv.plan;
+  document.getElementById('eFreq').value    = inv.freq;
+  document.getElementById('eElapsed').value = inv.elapsed;
+  document.getElementById('eStatus').value  = inv.status;
+  openModal('editModal');
+}
+
+function saveEdit() {
+  const id  = parseInt(document.getElementById('editId').value);
+  const idx = investors.findIndex(i => i.id === id);
+  if (idx === -1) return;
+  investors[idx] = { ...investors[idx],
+    amount: parseFloat(document.getElementById('eAmount').value),
+    months: parseInt(document.getElementById('eMonths').value),
+    plan:   document.getElementById('ePlan').value,
+    freq:   document.getElementById('eFreq').value,
+    elapsed: parseInt(document.getElementById('eElapsed').value) || 0,
+    status: document.getElementById('eStatus').value,
+  };
+  closeModal('editModal');
+  renderInvestors();
+  showToast('Inversor actualizado correctamente.');
+}
+
+function deleteInvestor(id) {
+  if (!confirm('¿Confirmas eliminar este inversor?')) return;
+  investors = investors.filter(i => i.id !== id);
+  renderInvestors();
+  showToast('Inversor eliminado.', 'danger');
+}
+
+// ─── ONBOARDING FLOW ───
+let currentStep = 1, foundPerson = null, selectedPlan = 'standard', selectedFreq = 'monthly';
+
+function resetOnboarding() {
+  currentStep = 1; foundPerson = null; selectedPlan = 'standard'; selectedFreq = 'monthly';
+  ['step1','step2','step3'].forEach((s,i) => document.getElementById(s).className = 'step' + (i===0?' active':''));
+  document.getElementById('consentCheck').checked = false;
+  document.getElementById('consentBtn').disabled  = true;
+  document.getElementById('searchName').value     = '';
+  document.getElementById('searchCedula').value   = '';
+  document.getElementById('searchResultPanel').className = 'search-result';
+  document.getElementById('searchNotFound').className    = 'search-notfound';
+  document.getElementById('searchingAnim').className     = 'searching-anim';
+  document.getElementById('searchNextBtn').disabled      = true;
+  updateStepIndicator(1);
+}
+
+function startOnboarding() { resetOnboarding(); openModal('onboardingModal'); }
+function updateConsentBtn() { document.getElementById('consentBtn').disabled = !document.getElementById('consentCheck').checked; }
+
+function goStep(n) {
+  document.getElementById('step' + currentStep).className = 'step';
+  currentStep = n;
+  document.getElementById('step' + n).className = 'step active';
+  updateStepIndicator(n);
+  if (n === 3 && foundPerson) {
+    document.getElementById('invStepTitle').textContent = 'Configurar inversión — ' + foundPerson.firstName + ' ' + foundPerson.lastName;
+    document.getElementById('invStepSub').textContent   = 'Define el monto, el plan y la frecuencia de pago para este inversor.';
+    selectPlan('standard'); selectFreq('monthly');
+    document.getElementById('invAmount').value = 1000000;
+    document.getElementById('invMonths').value = 12;
+    updateInvSummary();
+  }
+}
+
+function updateStepIndicator(active) {
+  for (let i = 1; i <= 3; i++) {
+    const d = document.getElementById('dot' + i);
+    d.className = 'step-dot' + (i < active ? ' done' : i === active ? ' current' : '');
+  }
+  for (let i = 1; i <= 2; i++) {
+    document.getElementById('line' + i).className = 'step-line' + (i < active ? ' done' : '');
+  }
+}
+
+// ─── SEARCH ───
+function doSearch() {
+  const name   = document.getElementById('searchName').value.trim().toLowerCase();
+  const cedula = document.getElementById('searchCedula').value.trim();
+  if (!name && !cedula) { showToast('Ingresa el nombre o la cédula.', 'danger'); return; }
+
+  document.getElementById('searchResultPanel').className = 'search-result';
+  document.getElementById('searchNotFound').className    = 'search-notfound';
+  document.getElementById('searchNextBtn').disabled      = true;
+  foundPerson = null;
+
+  const anim = document.getElementById('searchingAnim');
+  anim.className = 'searching-anim show';
+
+  const phases = ['Verificando identidad', 'Consultando registros', 'Validando cédula', 'Cruzando información', 'Resultado listo'];
+  let i = 0;
+  const iv = setInterval(() => { document.getElementById('searchDots').textContent = phases[Math.min(i++, 4)] + '...'; }, 380);
+
+  setTimeout(() => {
+    clearInterval(iv);
+    anim.className = 'searching-anim';
+
+    // Buscar en REGISTRY
+    const match = REGISTRY.find(r =>
+      r.cedulas.includes(cedula) ||
+      r.names.some(n => name.includes(n))
+    );
+
+    if (match) { foundPerson = match; showFoundPanel(match); }
+    else { document.getElementById('searchNotFound').className = 'search-notfound show'; }
+  }, 2100);
+}
+
+function showFoundPanel(p) {
+  const ini = (p.firstName[0] + p.lastName[0]).toUpperCase();
+  document.getElementById('srAvatar').textContent = ini;
+  document.getElementById('srName').textContent   = p.firstName + ' ' + p.lastName;
+  document.getElementById('srSub').textContent    = p.location + ' · ' + p.age + ' años';
+  document.getElementById('srData').innerHTML = `
+    <div class="search-result-item"><div class="search-result-item-label">Nombre completo</div><div class="search-result-item-value">${p.firstName} ${p.lastName}</div></div>
+    <div class="search-result-item"><div class="search-result-item-label">Edad</div><div class="search-result-item-value">${p.age} años</div></div>
+    <div class="search-result-item"><div class="search-result-item-label">Teléfono</div><div class="search-result-item-value">${p.phone}</div></div>
+    <div class="search-result-item"><div class="search-result-item-label">Ubicación</div><div class="search-result-item-value">${p.location}</div></div>
+    <div class="search-result-item" style="grid-column:1/-1"><div class="search-result-item-label">Cuenta bancaria principal</div><div class="search-result-item-value">${p.bankAccount}</div></div>`;
+  document.getElementById('searchResultPanel').className = 'search-result show';
+  document.getElementById('searchNextBtn').disabled = false;
+}
+
+// ─── PLAN & FREQ ───
+function selectPlan(plan) {
+  selectedPlan = plan;
+  document.getElementById('planCardStd').className = 'plan-select-card' + (plan === 'standard' ? ' selected' : '');
+  document.getElementById('planCardRei').className = 'plan-select-card' + (plan === 'reinvest' ? ' selected' : '');
+  updateInvSummary();
+}
+
+function selectFreq(freq) {
+  selectedFreq = freq;
+  document.getElementById('freqCardM').className = 'freq-card' + (freq === 'monthly' ? ' selected' : '');
+  document.getElementById('freqCardQ').className = 'freq-card' + (freq === 'biweekly' ? ' selected' : '');
+  updateInvSummary();
+}
+
+function updateInvSummary() {
+  const amount = parseFloat(document.getElementById('invAmount').value) || 1000000;
+  const months = parseInt(document.getElementById('invMonths').value);
+  const p      = getCalcParams(amount, months, selectedPlan, selectedFreq);
+  const fl     = selectedFreq === 'biweekly' ? 'Quincenal' : 'Mensual';
+  document.getElementById('invSummary').innerHTML = `
+    <div><div class="inv-summary-label">Pago ${fl.toLowerCase()}</div><div class="inv-summary-value">${fmt(p.periodicPayment)}</div></div>
+    <div><div class="inv-summary-label">Bono al vencimiento</div><div class="inv-summary-value">${fmt(p.endBonus)}</div></div>
+    <div><div class="inv-summary-label">Beneficio total neto</div><div class="inv-summary-value">${fmt(p.totalBenefit)}</div></div>
+    <div><div class="inv-summary-label">ROI neto</div><div class="inv-summary-value">${p.roi}%</div></div>`;
+}
+
+function finalizeInvestor() {
+  if (!foundPerson) return;
+  const amount = parseFloat(document.getElementById('invAmount').value) || 1000000;
+  const months = parseInt(document.getElementById('invMonths').value);
+  if (amount < 1000000) { showToast('El monto mínimo es $1.000.000', 'danger'); return; }
+
+  investors.push({
+    id: nextId++,
+    firstName:   foundPerson.firstName,
+    lastName:    foundPerson.lastName,
+    age:         foundPerson.age,
+    phone:       foundPerson.phone,
+    bankAccount: foundPerson.bankAccount,
+    location:    foundPerson.location,
+    email:       foundPerson.email || null,
+    cedula:      foundPerson.cedulas[0],
+    amount, months,
+    plan:    selectedPlan,
+    freq:    selectedFreq,
+    elapsed: 0,
+    status:  'pending',
+  });
+
+  closeModal('onboardingModal');
+  renderInvestors();
+  showToast(`${foundPerson.firstName} ${foundPerson.lastName} registrado exitosamente como inversor.`);
+  setTimeout(() => document.getElementById('inversores').scrollIntoView({ behavior: 'smooth' }), 400);
+}
+
+// ─── CERRAR AL HACER CLIC EN OVERLAY ───
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => {
+    if (e.target === o) { o.classList.remove('open'); if (o.id === 'onboardingModal') resetOnboarding(); }
+  });
+});
+
+// ─── INIT ───
+calcular();
+renderInvestors();
+</script>
+</body>
+</html>
